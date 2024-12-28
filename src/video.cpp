@@ -25,6 +25,7 @@ void video::create(VideoWriter &out, VideoCapture &src, vec<Evt> evts, vec<int> 
         nxt.insert({evts[i].nd, {1, i}});
     }
 
+    printf("%d events\n", sz(evts));
     printf("ready to start\n");
 
     // process evts in nxt
@@ -49,6 +50,16 @@ void video::create(VideoWriter &out, VideoCapture &src, vec<Evt> evts, vec<int> 
                 int evtlen=evts[ind].nd-evts[ind].st+1;
                 evts[ind].bg_srcst_=clips[choice].st+rand()%(clips[choice].cnt-evtlen);
                 // evts[ind].bg_srcst_=srccut[rand()%sz(srccut)];
+            }
+
+            if (evts[ind].type==EvtType::Region) {
+                int choice;
+                do {
+                    choice=rand()%sz(clips);
+                } while (evts[ind].nd-evts[ind].st > clips[choice].cnt);
+
+                int evtlen=evts[ind].nd-evts[ind].st+1;
+                evts[ind].region_srcst_=clips[choice].st+rand()%(clips[choice].cnt-evtlen);
             }
         } else {
             // kill
@@ -185,6 +196,38 @@ Mat video::write_evt(VideoCapture &src, const vec<int> &active, int frm, const v
         } else if (evts[ind].type==EvtType::Text) {
             // TEXT
             draw_glowing_text(res, evts[ind].text_str, "res/font.ttf", 60, Scalar(255,255,255), Scalar(0,0,255), 45);
+        } else if (evts[ind].type==EvtType::Region) {
+            // REGION
+            int srcfrm=evts[ind].region_srcst_ + frm-evts[ind].st;
+            src.set(CAP_PROP_POS_FRAMES, srcfrm);
+
+            // copy src frame
+            Mat mt;
+            src.read(mt);
+
+            // effects
+            Point dst=evts[ind].region_dst;
+            if (srcfrm-evts[ind].region_srcst_<10) {
+                shake_frame(mt, 20, evts[ind].bg_srcst_, srcfrm);
+                glitch_frame(mt);
+                flash_frame(mt, evts[ind].bg_srcst_, srcfrm);
+
+                double shake=max(0., 1.-(srcfrm-evts[ind].bg_srcst_)*0.1);
+                int a=(int)(20.*shake); // amplitude
+                int dx=rand()%(2*a+1)-a;
+                int dy=rand()%(2*a+1)-a;
+                dst.x+=dx;
+                dst.y+=dy;
+            }
+
+            // copy mt to res
+            for (int r=evts[ind].region_src.y; r<=evts[ind].region_src.y+evts[ind].region_src.height-1; ++r) {
+                for (int c=evts[ind].region_src.x; c<=evts[ind].region_src.x+evts[ind].region_src.width-1; ++c) {
+                    int resr=(int)(evts[ind].region_scale * (r-evts[ind].region_src.y)) + dst.y;
+                    int resc=(int)(evts[ind].region_scale * (c-evts[ind].region_src.x)) + dst.x;
+                    res.at<Vec3b>(resr, resc) = mt.at<Vec3b>(r, c);
+                }
+            }
         }
     }
 

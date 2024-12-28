@@ -39,7 +39,9 @@ struct Evt {
 
     // region
     int region_srcst_; // source video start frame
-    Rect region_src, region_dst;
+    Rect region_src;
+    Point region_dst; // top left
+    float region_scale;
 };
 
 inline Evt evt_bg(float st, float nd) {
@@ -59,13 +61,14 @@ inline Evt evt_txt(float st, float nd, string s) {
     return e;
 }
 
-inline Evt evt_region(float st, float nd, Rect src, Rect dst) {
+inline Evt evt_region(float st, float nd, Rect src, Point dst, float scale) {
     Evt e;
     e.type=EvtType::Region;
     e.st=t2frm(st);
     e.nd=t2frm(nd);
     e.region_src=src;
     e.region_dst=dst;
+    e.region_scale=scale;
     return e;
 }
 
@@ -96,6 +99,13 @@ namespace edit {
         }
 
         if (name=="derniere-beatdrop") {
+            // region
+            // float scale=(float)(483-60)/W * 1.2;
+            // res.push_back(evt_region(10.966, 11.565, Rect(0,R1,W,R2-R1+1), Point(10,R1+10), scale));
+            // res.push_back(evt_region(11.094, 11.565, Rect(0,R1,W,R2-R1+1), Point(W/2+10,R1+10), scale));
+            // res.push_back(evt_region(11.211, 11.565, Rect(0,R1,W,R2-R1+1), Point(W/2+10,(R1+R2)/2+10), scale));
+            // res.push_back(evt_region(11.312, 11.565, Rect(0,R1,W,R2-R1+1), Point(10,(R1+R2)/2+10), scale));
+
             // text
             vec<pair<float,float>> in={
                 {0, 3.893},
