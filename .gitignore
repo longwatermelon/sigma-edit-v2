@@ -5,3 +5,4 @@ a.out
 res/video/*
 out.mp4
 ffmpeg.log
+no-audio.mp4

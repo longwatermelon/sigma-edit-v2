@@ -7,6 +7,7 @@
 
 int main() {
     srand(time(0));
+    system("mkdir -p out");
 
     // create video
     VideoWriter out("no-audio.mp4", VideoWriter::fourcc('a','v','c','1'), FPS, Size(W,H));
