@@ -13,6 +13,7 @@ int main() {
     VideoWriter out("no-audio.mp4", VideoWriter::fourcc('a','v','c','1'), FPS, Size(W,H));
 
     // 1: bateman edit
+    // 2: meme compilation
     int type=2;
     string bgm;
 
