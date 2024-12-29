@@ -113,7 +113,7 @@ void draw_top_text(Mat &frame, const std::string &text, const std::string &fontP
 
     // Calculate text size to center it
     Size textSize = ft2->getTextSize(text, fontHeight, -1, nullptr);
-    Point textOrg((frame.cols - textSize.width) / 2, textSize.height+100);
+    Point textOrg((frame.cols - textSize.width) / 2, textSize.height+125);
 
     // Create a glow layer
     Mat glowLayer = Mat::zeros(frame.size(), frame.type());
@@ -129,6 +129,60 @@ void draw_top_text(Mat &frame, const std::string &text, const std::string &fontP
 
     // Render the main text on top
     ft2->putText(frame, text, textOrg, fontHeight, Scalar(255,255,255), -1, LINE_AA, false);
+}
+
+void draw_top_text_wrap(cv::Mat &frame, const std::string &text, const std::string &fontPath, int fontHeight) {
+    // Create FreeType object for rendering custom fonts
+    cv::Ptr<cv::freetype::FreeType2> ft2 = cv::freetype::createFreeType2();
+    ft2->loadFontData(fontPath, 0); // Load the font file
+
+    // Split the text into lines based on newline characters
+    std::vector<std::string> lines;
+    std::istringstream textStream(text);
+    std::string line;
+    while (std::getline(textStream, line)) {
+        lines.push_back(line);
+    }
+
+    // Determine the total height of the multi-line text block
+    int lineSpacing = 10; // Spacing between lines
+    int totalTextHeight = lines.size() * fontHeight + (lines.size() - 1) * lineSpacing;
+
+    // Calculate the vertical start position to center the text block at y = 125
+    int initialY = 125 - totalTextHeight / 2 + fontHeight;
+
+    // Create a glow layer
+    cv::Mat glowLayer = cv::Mat::zeros(frame.size(), frame.type());
+
+    // Loop through each line of text and render
+    for (size_t i = 0; i < lines.size(); ++i) {
+        const std::string &currentLine = lines[i];
+
+        // Calculate text size and position for each line
+        cv::Size textSize = ft2->getTextSize(currentLine, fontHeight, -1, nullptr);
+        cv::Point textOrg((frame.cols - textSize.width) / 2, initialY + i * (fontHeight + lineSpacing));
+
+        // Render the glow text on the glow layer
+        ft2->putText(glowLayer, currentLine, textOrg, fontHeight, cv::Scalar(0, 0, 0), -1, cv::LINE_AA, false);
+    }
+
+    // Apply Gaussian blur to create the glow effect
+    cv::GaussianBlur(glowLayer, glowLayer, cv::Size(5, 5), 10);
+
+    // Add the glow layer to the original frame
+    cv::add(frame, glowLayer, frame);
+
+    // Render the main text on top of the glow
+    for (size_t i = 0; i < lines.size(); ++i) {
+        const std::string &currentLine = lines[i];
+
+        // Calculate text size and position for each line
+        cv::Size textSize = ft2->getTextSize(currentLine, fontHeight, -1, nullptr);
+        cv::Point textOrg((frame.cols - textSize.width) / 2, initialY + i * (fontHeight + lineSpacing));
+
+        // Render the main text
+        ft2->putText(frame, currentLine, textOrg, fontHeight, cv::Scalar(255, 255, 255), -1, cv::LINE_AA, false);
+    }
 }
 
 // st: start frame
@@ -205,6 +259,12 @@ Mat video::write_evt(VideoCapture &src, const vec<int> &active, int frm, const v
             Mat mt;
             src.read(mt);
 
+            // shift down
+            Mat tmat = (Mat_<double>(2,3)<<1, 0, 0, 0, 1, evts[ind]._bg_yoffset);
+            Mat shift;
+            warpAffine(mt,shift,tmat,mt.size());
+            mt=shift;
+
             // effects
             if (srcfrm-evts[ind].bg_srcst_<10) {
                 shake_frame(mt, 20, evts[ind].bg_srcst_, srcfrm);
@@ -255,7 +315,7 @@ Mat video::write_evt(VideoCapture &src, const vec<int> &active, int frm, const v
             }
         } else if (evts[ind].type==EvtType::TopText) {
             // TOP TEXT
-            draw_top_text(res, evts[ind].top_text_str, "res/font.ttf", 50);
+            draw_top_text_wrap(res, evts[ind].top_text_str, "res/font.ttf", 60);
         }
     }
 

@@ -31,9 +31,11 @@ struct Evt {
     int nd; // end time
 
     // fields with extra _ at end are deferred fields
+    // fields with prefix _ are optional fields
 
     // bg
     int bg_srcst_; // source video start frame
+    int _bg_yoffset=0; // how far down bg should go
 
     // text
     string text_str; // what's displayed on screen
@@ -48,11 +50,12 @@ struct Evt {
     string top_text_str; // what's displayed on screen
 };
 
-inline Evt evt_bg(float st, float nd) {
+inline Evt evt_bg(float st, float nd, int yoffset=0) {
     Evt e;
     e.type=EvtType::Bg;
     e.st=t2frm(st);
     e.nd=t2frm(nd);
+    e._bg_yoffset=yoffset;
     return e;
 }
 
@@ -199,19 +202,29 @@ namespace meme {
     inline vec<Evt> audsrc_evts() {
         vec<Evt> res;
         vec<string> captions={
+            "HER: \"WHY ARE YOU ALWAYS SO QUIET?\"\nMY HONEST REACTION:",
             "POV: YOU'RE A SIGMA",
             "POV: YOU JUST LEARNED ABOUT MEWING",
-            "POV: YOU JUST LEARNED ABOUT CARROTMAXXING",
-            "POV: YOU JUST LEARNED ABOUT BONESMASHING",
+            "POV: YOU JUST LEARNED ABOUT\nCARROTMAXXING",
+            "POV: YOU JUST LEARNED ABOUT\nBONESMASHING",
             "ME AFTER A YEAR OF MEWING:",
             "POV: YOU MOG YOUR ENTIRE CLASS",
             "ME AFTER WATCHING SIGMA EDITS:",
             "ME ON MY WAY TO WATCH SIGMA EDITS:",
-            "ME WHEN I HAVE NO FRIENDS (I'M A SIGMA):",
+            "ME WHEN I HAVE NO FRIENDS\n(I'M A SIGMA):",
             "ME WHEN I DON'T HAVE A GIRLFRIEND:",
-            "POV: YOU LOCKED IN AND BECAME A SIGMA",
+            "POV: YOU LOCKED IN AND\nBECAME A SIGMA",
             "POV: YOU GOT ON THE SIGMA GRIND",
             "ME AFTER I LISTEN TO PHONK:",
+            "ME BECAUSE I SUBSCRIBED TO\nSIGMA CENTRAL:",
+            "ME WALKING INTO CLASS KNOWING\nI'M A MYSTERIOUS SIGMA MALE:",
+            "\"YOU CAN'T JUST WATCH SIGMA EDITS ALL DAY!\"\nMY HONEST REACTION:",
+            "\"GET A JOB AND STOP WATCHING SIGMA CENTRAL!\"\nMY HONEST REACTION:",
+            "\"WHEN ARE YOU GOING TO GET A JOB?\"\nI'M ON A DIFFERENT PATH NOW BROTHER.",
+            "SIGMA MALES ONLY HAVE ONE MOOD:",
+            "ME AFTER A PRODUCTIVE DAY OF\nARGUING ABOUT SIGMA MALES ON REDDIT:",
+            "ME AFTER SUBSCRIBING TO\nSIGMA CENTRAL:",
+            "\"WHY DO YOU HAVE NO FRIENDS?\"\nME, A SIGMA MALE:",
         };
         random_device rd;
         mt19937 g(rd());
@@ -221,7 +234,7 @@ namespace meme {
         float t=0;
         for (int i=0; i<cnt; ++i) {
             float tp=t + 3./25*sz(captions[i]);
-            res.push_back(evt_bg(t, tp));
+            res.push_back(evt_bg(t, tp, 100));
             res.push_back(evt_toptxt(t, tp, captions[i]));
             t=tp;
         }
