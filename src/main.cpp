@@ -18,11 +18,13 @@ int main() {
 
     if (type==1) {
         // bateman edit
+        printf("video type: bateman edit\n");
         VideoCapture src("res/video/bateman.mp4");
         bgm="derniere-beatdrop";
         video::create(out, src, edit::audsrc_evts(bgm), vidsrc_cuts("bateman"));
     } else if (type==2) {
         // meme compilation
+        printf("video type: meme compilation\n");
         VideoCapture src("res/video/bateman.mp4");
         bgm="next";
         video::create(out, src, meme::audsrc_evts(), vidsrc_cuts("bateman"));
