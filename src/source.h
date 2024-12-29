@@ -22,6 +22,7 @@ enum class EvtType {
     Bg=0,
     Region=1,
     Text=2,
+    TopText=3,
 };
 
 struct Evt {
@@ -42,6 +43,9 @@ struct Evt {
     Rect region_src;
     Point region_dst; // top left
     float region_scale;
+
+    // top text
+    string top_text_str; // what's displayed on screen
 };
 
 inline Evt evt_bg(float st, float nd) {
@@ -69,6 +73,15 @@ inline Evt evt_region(float st, float nd, Rect src, Point dst, float scale) {
     e.region_src=src;
     e.region_dst=dst;
     e.region_scale=scale;
+    return e;
+}
+
+inline Evt evt_toptxt(float st, float nd, string s) {
+    Evt e;
+    e.type=EvtType::TopText;
+    e.st=t2frm(st);
+    e.nd=t2frm(nd);
+    e.top_text_str=s;
     return e;
 }
 
@@ -179,5 +192,40 @@ namespace edit {
         } else {
             assert(false);
         }
+    }
+}
+
+namespace meme {
+    inline vec<Evt> audsrc_evts() {
+        vec<Evt> res;
+        vec<string> captions={
+            "POV: YOU'RE A SIGMA",
+            "POV: YOU JUST LEARNED ABOUT MEWING",
+            "POV: YOU JUST LEARNED ABOUT CARROTMAXXING",
+            "POV: YOU JUST LEARNED ABOUT BONESMASHING",
+            "ME AFTER A YEAR OF MEWING:",
+            "POV: YOU MOG YOUR ENTIRE CLASS",
+            "ME AFTER WATCHING SIGMA EDITS:",
+            "ME ON MY WAY TO WATCH SIGMA EDITS:",
+            "ME WHEN I HAVE NO FRIENDS (I'M A SIGMA):",
+            "ME WHEN I DON'T HAVE A GIRLFRIEND:",
+            "POV: YOU LOCKED IN AND BECAME A SIGMA",
+            "POV: YOU GOT ON THE SIGMA GRIND",
+            "ME AFTER I LISTEN TO PHONK:",
+        };
+        random_device rd;
+        mt19937 g(rd());
+        shuffle(all(captions),g);
+
+        int cnt=8;
+        float t=0;
+        for (int i=0; i<cnt; ++i) {
+            float tp=t + 3./25*sz(captions[i]);
+            res.push_back(evt_bg(t, tp));
+            res.push_back(evt_toptxt(t, tp, captions[i]));
+            t=tp;
+        }
+
+        return res;
     }
 }

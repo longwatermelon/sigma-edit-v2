@@ -106,6 +106,31 @@ void draw_glowing_text(Mat &frame, const std::string &text, const std::string &f
     ft2->putText(frame, text, textOrg, fontHeight, textColor, -1, LINE_AA, false);
 }
 
+void draw_top_text(Mat &frame, const std::string &text, const std::string &fontPath, int fontHeight) {
+    // Create FreeType object for rendering custom fonts
+    Ptr<cv::freetype::FreeType2> ft2 = cv::freetype::createFreeType2();
+    ft2->loadFontData(fontPath, 0); // Load the font file
+
+    // Calculate text size to center it
+    Size textSize = ft2->getTextSize(text, fontHeight, -1, nullptr);
+    Point textOrg((frame.cols - textSize.width) / 2, textSize.height+100);
+
+    // Create a glow layer
+    Mat glowLayer = Mat::zeros(frame.size(), frame.type());
+
+    // Render the glow text
+    ft2->putText(glowLayer, text, textOrg, fontHeight, Scalar(0,0,0), -1, LINE_AA, false);
+
+    // Apply Gaussian blur to create the glow effect
+    GaussianBlur(glowLayer, glowLayer, Size(1, 1), 0);
+
+    // Add the glow layer to the original frame (preserving brightness)
+    add(frame, glowLayer, frame); // Add glow to the frame without dimming
+
+    // Render the main text on top
+    ft2->putText(frame, text, textOrg, fontHeight, Scalar(255,255,255), -1, LINE_AA, false);
+}
+
 // st: start frame
 // cur: cur frame
 // includes motion blur
@@ -228,6 +253,9 @@ Mat video::write_evt(VideoCapture &src, const vec<int> &active, int frm, const v
                     res.at<Vec3b>(resr, resc) = mt.at<Vec3b>(r, c);
                 }
             }
+        } else if (evts[ind].type==EvtType::TopText) {
+            // TOP TEXT
+            draw_top_text(res, evts[ind].top_text_str, "res/font.ttf", 50);
         }
     }
 
