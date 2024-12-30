@@ -228,7 +228,7 @@ namespace meme {
         mt19937 g(rd());
         shuffle(all(captions),g);
 
-        int cnt=8;
+        int cnt=sz(captions);
         float t=0;
         for (int i=0; i<cnt; ++i) {
             float tp=t + 3./25*sz(captions[i]);

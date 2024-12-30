@@ -48,7 +48,7 @@ void video::create(VideoWriter &out, VideoCapture &src, vec<Evt> evts, vec<int> 
                 } while (evts[ind].nd-evts[ind].st > clips[choice].cnt);
 
                 int evtlen=evts[ind].nd-evts[ind].st+1;
-                evts[ind].bg_srcst_=clips[choice].st+rand()%(clips[choice].cnt-evtlen);
+                evts[ind].bg_srcst_=clips[choice].st+rand()%(clips[choice].cnt-evtlen+1);
                 // evts[ind].bg_srcst_=srccut[rand()%sz(srccut)];
             }
 
@@ -59,7 +59,7 @@ void video::create(VideoWriter &out, VideoCapture &src, vec<Evt> evts, vec<int> 
                 } while (evts[ind].nd-evts[ind].st > clips[choice].cnt);
 
                 int evtlen=evts[ind].nd-evts[ind].st+1;
-                evts[ind].region_srcst_=clips[choice].st+rand()%(clips[choice].cnt-evtlen);
+                evts[ind].region_srcst_=clips[choice].st+rand()%(clips[choice].cnt-evtlen+1);
             }
         } else {
             // kill

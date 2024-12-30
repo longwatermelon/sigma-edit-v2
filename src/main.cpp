@@ -14,7 +14,7 @@ int main() {
 
     // 1: bateman edit
     // 2: meme compilation
-    int type=2;
+    int type=1;
     string bgm;
 
     if (type==1) {

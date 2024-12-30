@@ -1,4 +1,4 @@
-FLAGS=-std=c++17 -ggdb -O2 `pkg-config --cflags --libs opencv4` -Wno-unused-result
+FLAGS=-std=c++17 -ggdb `pkg-config --cflags --libs opencv4` -Wno-unused-result -O2
 
-target: $(OBJS)
+target:
 	g++ src/*.cpp $(FLAGS)
