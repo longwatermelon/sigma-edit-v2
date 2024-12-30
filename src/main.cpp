@@ -5,7 +5,7 @@
 #include <thread>
 #include <fstream>
 
-int main() {
+int main(int argc, char **argv) {
     srand(time(0));
     system("mkdir -p out");
 
@@ -14,8 +14,12 @@ int main() {
 
     // 1: bateman edit
     // 2: meme compilation
-    int type=1;
+    int type=2;
     string bgm;
+
+    if (argc>1) {
+        type=stoi(argv[1]);
+    }
 
     if (type==1) {
         // bateman edit

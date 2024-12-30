@@ -153,6 +153,12 @@ namespace edit {
                     "YOU'RE ESCAPING THE MATRIX",
                     "YOU CHOSE TO BE SINGLE",
                     "YOU ENJOY SOLITUDE",
+                    "YOU HAVE NO FRIENDS",
+                    "YOU HAVE NO RIZZ",
+                    "YOU'RE ALWAYS ALONE",
+                    "YOU HAVE A BEAST INSIDE YOU",
+                    "YOU SEE RED WHEN YOU'RE ANGRY",
+                    "NORADRENALINE IS YOUR BIGGEST WEAPON",
                 };
                 random_device rd;
                 mt19937 g(rd());
@@ -228,7 +234,7 @@ namespace meme {
         mt19937 g(rd());
         shuffle(all(captions),g);
 
-        int cnt=sz(captions);
+        int cnt=8;
         float t=0;
         for (int i=0; i<cnt; ++i) {
             float tp=t + 3./25*sz(captions[i]);
