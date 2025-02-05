@@ -14,7 +14,8 @@ int main(int argc, char **argv) {
 
     // 1: bateman edit
     // 2: meme compilation
-    int type=2;
+    // 3: comparison
+    int type=3;
     string bgm;
 
     if (argc>1) {
@@ -24,15 +25,21 @@ int main(int argc, char **argv) {
     if (type==1) {
         // bateman edit
         printf("video type: bateman edit\n");
-        VideoCapture src("res/video/bateman.mp4");
+        VideoCapture src("res/video/edit/bateman.mp4");
         bgm="derniere-beatdrop";
         video::create(out, src, edit::audsrc_evts(bgm), vidsrc_cuts("bateman"));
     } else if (type==2) {
         // meme compilation
         printf("video type: meme compilation\n");
-        VideoCapture src("res/video/bateman.mp4");
+        VideoCapture src("res/video/edit/bateman.mp4");
         bgm="next";
         video::create(out, src, meme::audsrc_evts(), vidsrc_cuts("bateman"));
+    } else if (type==3) {
+        // compare
+        printf("video type: comparison\n");
+        VideoCapture src("res/video/compare/src.mp4");
+        bgm="aura-compare";
+        video::create(out, src, compare::audsrc_evts(bgm), {});
     }
 
     out.release();

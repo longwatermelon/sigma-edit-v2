@@ -34,14 +34,14 @@ struct Evt {
     // fields with prefix _ are optional fields
 
     // bg
-    int bg_srcst_; // source video start frame
+    int bg_srcst_=-1; // source video start frame
     int _bg_yoffset=0; // how far down bg should go
 
     // text
     string text_str; // what's displayed on screen
 
     // region
-    int region_srcst_; // source video start frame
+    int region_srcst_=-1; // source video start frame
     Rect region_src;
     Point region_dst; // top left
     float region_scale;
@@ -241,6 +241,55 @@ namespace meme {
             res.push_back(evt_bg(t, tp, 100));
             res.push_back(evt_toptxt(t, tp, captions[i]));
             t=tp;
+        }
+
+        return res;
+    }
+}
+
+namespace compare {
+    inline map<string,vec<double>> beats={
+        {"aura-compare", {
+            4.832, 5.499, 6.166, 6.824, 7.485, 8.158, 8.837, 9.498, // character 1
+            10.165, 10.825, 11.457, 12.171, 12.796, 13.457, 14.166, 14.827, // character 2
+            15.512, 23.539 // winner verdict
+        }},
+    };
+
+    inline vec<Evt> audsrc_evts(string name) {
+        vec<Evt> res;
+        vec<string> cats={
+            "IQ", "BATTLE IQ", "AGILITY", "STRENGTH", "ENDURANCE", "SPEED", "EXPERIENCE",
+            "SKILL", "WEAPONS", "POWER", "COMBAT", "STAMINA", "FEATS", "DEFENSE"
+        };
+
+        vec<int> srcs={
+            0, // bateman
+            198, // shelby
+        };
+        int i1=0, i2=1;
+
+        int r1=417;
+        int h=1920/2;
+
+        // intro
+        // res.push_back(evt_bg(0, 4.832));
+        res.push_back(evt_region(0, 4.832, Rect(0, r1, 1080, h), Point(0,0), 1.));
+        res.push_back(evt_region(0, 4.832, Rect(0, r1, 1080, h), Point(0,h-100), 1.));
+        res[0].region_srcst_ = srcs[i1];
+        res[1].region_srcst_ = srcs[i2];
+
+        // character 1
+        for (int i=0; i<4; ++i) {
+            // trait
+            res.push_back(evt_region(beats[name][2*i], beats[name][2*i+1], Rect(0, r1, 1080, h), Point(0,0), 1.));
+            res.back().region_srcst_ = srcs[i1];
+            res.push_back(evt_region(beats[name][2*i], beats[name][2*i+1], Rect(0, r1, 1080, h), Point(0,h), 1.));
+            res.back().region_srcst_ = srcs[i2];
+
+            // who gets it
+            res.push_back(evt_bg(beats[name][2*i+1], beats[name][2*i+2]));
+            res.back().bg_srcst_ = srcs[i1];
         }
 
         return res;

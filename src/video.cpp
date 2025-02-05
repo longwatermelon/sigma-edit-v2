@@ -41,7 +41,7 @@ void video::create(VideoWriter &out, VideoCapture &src, vec<Evt> evts, vec<int> 
             active.push_back(ind);
             sort(all(active),[&](int x, int y){return evts[x].type<evts[y].type;});
 
-            if (evts[ind].type==EvtType::Bg) {
+            if (evts[ind].type==EvtType::Bg && evts[ind].bg_srcst_==-1) {
                 int choice;
                 do {
                     choice=rand()%sz(clips);
@@ -52,7 +52,7 @@ void video::create(VideoWriter &out, VideoCapture &src, vec<Evt> evts, vec<int> 
                 // evts[ind].bg_srcst_=srccut[rand()%sz(srccut)];
             }
 
-            if (evts[ind].type==EvtType::Region) {
+            if (evts[ind].type==EvtType::Region && evts[ind].region_srcst_==-1) {
                 int choice;
                 do {
                     choice=rand()%sz(clips);
@@ -227,15 +227,15 @@ void glitch_frame(Mat &mt) {
 
     int offset=rand()%20-10;
     if (offset>0) {
-        ch[0](Rect(0, 0, W-offset, H)).copyTo(ch[0](Rect(offset, 0, W-offset, H)));
+        ch[0](Rect(0, 0, mt.cols-offset, mt.rows)).copyTo(ch[0](Rect(offset, 0, mt.cols-offset, mt.rows)));
     } else {
-        ch[0](Rect(-offset, 0, W+offset, H)).copyTo(ch[0](Rect(0, 0, W+offset, H)));
+        ch[0](Rect(-offset, 0, mt.cols+offset, mt.rows)).copyTo(ch[0](Rect(0, 0, mt.cols+offset, mt.rows)));
     }
 
     merge(ch, 3, mt);
 
     // dim every 5th row
-    for (int i=0; i<H; i+=5) {
+    for (int i=0; i<mt.rows; i+=5) {
         mt.row(i)*=0.5;
     }
 }
@@ -248,7 +248,7 @@ void flash_frame(Mat &mt, int st, int cur) {
 }
 
 Mat video::write_evt(VideoCapture &src, const vec<int> &active, int frm, const vec<Evt> &evts) {
-    Mat res(H,W,CV_8UC3);
+    Mat res(H,W,CV_8UC3,cv::Scalar(0,0,0));
     for (int ind:active) {
         if (evts[ind].type==EvtType::Bg) {
             // BACKGROUND
@@ -310,6 +310,8 @@ Mat video::write_evt(VideoCapture &src, const vec<int> &active, int frm, const v
                 for (int c=evts[ind].region_src.x; c<=evts[ind].region_src.x+evts[ind].region_src.width-1; ++c) {
                     int resr=(int)(evts[ind].region_scale * (r-evts[ind].region_src.y)) + dst.y;
                     int resc=(int)(evts[ind].region_scale * (c-evts[ind].region_src.x)) + dst.x;
+                    if (resr<0 || resc<0 || resr>=H || resc>=W) continue;
+
                     res.at<Vec3b>(resr, resc) = mt.at<Vec3b>(r, c);
                 }
             }
