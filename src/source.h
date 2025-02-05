@@ -21,8 +21,9 @@ inline vec<int> vidsrc_cuts(string name) {
 enum class EvtType {
     Bg=0,
     Region=1,
-    Text=2,
-    TopText=3,
+    HBar=2,
+    Text=3,
+    TopText=4,
 };
 
 struct Evt {
@@ -39,6 +40,7 @@ struct Evt {
 
     // text
     string text_str; // what's displayed on screen
+    bool text_big=false;
 
     // region
     int region_srcst_=-1; // source video start frame
@@ -85,6 +87,14 @@ inline Evt evt_toptxt(float st, float nd, string s) {
     e.st=t2frm(st);
     e.nd=t2frm(nd);
     e.top_text_str=s;
+    return e;
+}
+
+inline Evt evt_hbar(float st, float nd) {
+    Evt e;
+    e.type=EvtType::HBar;
+    e.st=t2frm(st);
+    e.nd=t2frm(nd);
     return e;
 }
 
@@ -252,7 +262,7 @@ namespace compare {
         {"aura-compare", {
             4.832, 5.499, 6.166, 6.824, 7.485, 8.158, 8.837, 9.498, // character 1
             10.165, 10.825, 11.457, 12.171, 12.796, 13.457, 14.166, 14.827, // character 2
-            15.512, 23.539 // winner verdict
+            15.512, 18.539 // winner verdict
         }},
     };
 
@@ -262,20 +272,36 @@ namespace compare {
             "IQ", "BATTLE IQ", "AGILITY", "STRENGTH", "ENDURANCE", "SPEED", "EXPERIENCE",
             "SKILL", "WEAPONS", "POWER", "COMBAT", "STAMINA", "FEATS", "DEFENSE"
         };
+        random_device rd;
+        mt19937 g(rd());
+        shuffle(all(cats),g);
 
         vec<int> srcs={
             0, // bateman
             198, // shelby
         };
-        int i1=0, i2=1;
+        vec<string> names={
+            "PATRICK BATEMAN",
+            "THOMAS SHELBY",
+        };
+        int i1=rand()%sz(srcs), i2=rand()%sz(srcs);
+        if (i1==i2) {
+            (++i2)%=sz(srcs);
+        }
+        int score1=0, score2=0;
+
+        vec<int> win={i1,i1,i2,i2,i1,i2,i2,i2};
 
         int r1=417;
         int h=1920/2;
 
         // intro
         // res.push_back(evt_bg(0, 4.832));
-        res.push_back(evt_region(0, 4.832, Rect(0, r1, 1080, h), Point(0,0), 1.));
-        res.push_back(evt_region(0, 4.832, Rect(0, r1, 1080, h), Point(0,h-100), 1.));
+        res.push_back(evt_region(0, beats[name][0], Rect(0, r1, 1080, h), Point(0,0), 1.));
+        res.push_back(evt_region(0, beats[name][0], Rect(0, r1, 1080, h), Point(0,h), 1.));
+        res.push_back(evt_hbar(0, beats[name][0]));
+        res.push_back(evt_txt(0, beats[name][0], names[i1]+"\nVS\n"+names[i2]));
+        res.back().text_big=true;
         res[0].region_srcst_ = srcs[i1];
         res[1].region_srcst_ = srcs[i2];
 
@@ -286,10 +312,57 @@ namespace compare {
             res.back().region_srcst_ = srcs[i1];
             res.push_back(evt_region(beats[name][2*i], beats[name][2*i+1], Rect(0, r1, 1080, h), Point(0,h), 1.));
             res.back().region_srcst_ = srcs[i2];
+            res.push_back(evt_hbar(beats[name][2*i], beats[name][2*i+1]));
+            res.push_back(evt_txt(beats[name][2*i], beats[name][2*i+1], cats[i]));
+            res.back().text_big=true;
 
             // who gets it
             res.push_back(evt_bg(beats[name][2*i+1], beats[name][2*i+2]));
+            res.back().bg_srcst_ = srcs[win[i]];
+            (win[i]==i1?score1:score2)++;
+            res.push_back(evt_txt(beats[name][2*i+1], beats[name][2*i+2], to_string(score1)+"-"+to_string(score2)));
+            res.back().text_big=true;
+        }
+
+        // character 2
+        for (int i=4; i<8; ++i) {
+            // trait
+            res.push_back(evt_region(beats[name][2*i], beats[name][2*i+1], Rect(0, r1, 1080, h), Point(0,0), 1.));
+            res.back().region_srcst_ = srcs[i1];
+            res.push_back(evt_region(beats[name][2*i], beats[name][2*i+1], Rect(0, r1, 1080, h), Point(0,h), 1.));
+            res.back().region_srcst_ = srcs[i2];
+            res.push_back(evt_hbar(beats[name][2*i], beats[name][2*i+1]));
+            res.push_back(evt_txt(beats[name][2*i], beats[name][2*i+1], cats[i]));
+            res.back().text_big=true;
+
+            // who gets it
+            res.push_back(evt_bg(beats[name][2*i+1], beats[name][2*i+2]));
+            res.back().bg_srcst_ = srcs[win[i]];
+            (win[i]==i1?score1:score2)++;
+            res.push_back(evt_txt(beats[name][2*i+1], beats[name][2*i+2], to_string(score1)+"-"+to_string(score2)));
+            res.back().text_big=true;
+        }
+
+        // verdict
+        float st=beats[name][sz(beats[name])-2], nd=beats[name][sz(beats[name])-1];
+        if (score1<score2) {
+            res.push_back(evt_bg(st, nd));
+            res.back().bg_srcst_ = srcs[i2];
+            res.push_back(evt_txt(st, nd, names[i2]+" WINS"));
+            res.back().text_big=true;
+        } else if (score1>score2) {
+            res.push_back(evt_bg(st, nd));
             res.back().bg_srcst_ = srcs[i1];
+            res.push_back(evt_txt(st, nd, names[i1]+" WINS"));
+            res.back().text_big=true;
+        } else {
+            res.push_back(evt_region(st, nd, Rect(0, r1, 1080, h), Point(0,0), 1.));
+            res.back().region_srcst_ = srcs[i1];
+            res.push_back(evt_region(st, nd, Rect(0, r1, 1080, h), Point(0,h), 1.));
+            res.back().region_srcst_ = srcs[i2];
+            res.push_back(evt_hbar(st, nd));
+            res.push_back(evt_txt(st, nd, "TIE"));
+            res.back().text_big=true;
         }
 
         return res;

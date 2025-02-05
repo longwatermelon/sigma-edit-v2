@@ -80,31 +80,148 @@ void video::create(VideoWriter &out, VideoCapture &src, vec<Evt> evts, vec<int> 
     putchar('\n');
 }
 
-void draw_glowing_text(Mat &frame, const std::string &text, const std::string &fontPath,
+void draw_glowing_text(Mat &frame, const string &text, const string &fontPath,
                        int fontHeight, Scalar textColor, Scalar glowColor, int glowRadius) {
     // Create FreeType object for rendering custom fonts
-    Ptr<cv::freetype::FreeType2> ft2 = cv::freetype::createFreeType2();
+    Ptr<freetype::FreeType2> ft2 = freetype::createFreeType2();
     ft2->loadFontData(fontPath, 0); // Load the font file
 
-    // Calculate text size to center it
-    Size textSize = ft2->getTextSize(text, fontHeight, -1, nullptr);
-    Point textOrg((frame.cols - textSize.width) / 2, (frame.rows + textSize.height) / 2 - 100);
+    // Split the text into lines based on newline characters
+    vector<string> lines;
+    std::istringstream textStream(text);
+    string line;
+    while (std::getline(textStream, line)) {
+        lines.push_back(line);
+    }
 
-    // Create a glow layer
+    // Define line spacing between lines
+    int lineSpacing = 10; // Adjust as needed
+
+    // Determine the total height of the multi-line text block
+    int totalTextHeight = static_cast<int>(lines.size()) * fontHeight +
+                          (static_cast<int>(lines.size()) - 1) * lineSpacing;
+
+    // Calculate the vertical start position to center the text block in the frame.
+    // (The original function shifted the text up by 100 pixels; adjust if desired.)
+    int initialY = (frame.rows - totalTextHeight) / 2 + fontHeight - 100;
+
+    // Create a glow layer (an image the same size as frame)
     Mat glowLayer = Mat::zeros(frame.size(), frame.type());
 
-    // Render the glow text
-    ft2->putText(glowLayer, text, textOrg, fontHeight, glowColor, -1, LINE_AA, false);
+    // Render the glow text on the glow layer for each line
+    for (size_t i = 0; i < lines.size(); ++i) {
+        const string &currentLine = lines[i];
 
-    // Apply Gaussian blur to create the glow effect
+        // Calculate the size of the current line and center it horizontally
+        Size textSize = ft2->getTextSize(currentLine, fontHeight, -1, nullptr);
+        Point textOrg((frame.cols - textSize.width) / 2,
+                      initialY + static_cast<int>(i) * (fontHeight + lineSpacing));
+
+        // Draw the current line in the glow color on the glow layer
+        ft2->putText(glowLayer, currentLine, textOrg, fontHeight, glowColor,
+                     -1, LINE_AA, false);
+    }
+
+    // Apply Gaussian blur to the glow layer to create the glow effect
     GaussianBlur(glowLayer, glowLayer, Size(glowRadius, glowRadius), 0);
 
-    // Add the glow layer to the original frame (preserving brightness)
-    add(frame, glowLayer, frame); // Add glow to the frame without dimming
+    // Add the glow layer to the original frame
+    add(frame, glowLayer, frame);
 
-    // Render the main text on top
-    ft2->putText(frame, text, textOrg, fontHeight, textColor, -1, LINE_AA, false);
+    // Render the main (non-glow) text on top of the glow effect for each line
+    for (size_t i = 0; i < lines.size(); ++i) {
+        const string &currentLine = lines[i];
+
+        // Again, calculate text size and position for this line
+        Size textSize = ft2->getTextSize(currentLine, fontHeight, -1, nullptr);
+        Point textOrg((frame.cols - textSize.width) / 2,
+                      initialY + static_cast<int>(i) * (fontHeight + lineSpacing));
+
+        // Draw the main text in the specified text color
+        ft2->putText(frame, currentLine, textOrg, fontHeight, textColor,
+                     -1, LINE_AA, false);
+    }
 }
+
+void draw_horizontal_black_band(cv::Mat &frame, int centerY = 960, int fadeSize = 150)
+{
+    // Define the region that’s fully black:
+    // for example, centerY - 1, centerY, centerY + 1
+    int solidTop    = centerY - 1;  // 959
+    int solidBottom = centerY + 1;  // 961
+
+    // Define where the fade regions begin/end
+    int fadeTop    = centerY - fadeSize; // 960 - 150 = 810 (by default)
+    int fadeBottom = centerY + fadeSize; // 960 + 150 = 1110 (by default)
+
+    // Helper lambda to compute alpha for each row.
+    // alpha = 0 => no darkening, alpha = 1 => fully black
+    auto computeAlpha = [&](int y) -> float
+    {
+        // 1) Above the solid band, from fadeTop up to solidTop => alpha 0..1
+        if (y < solidTop) {
+            // linear from 0 to 1
+            float range = static_cast<float>(solidTop - fadeTop); // e.g. 959 - 810 = 149
+            float val   = static_cast<float>(y - fadeTop);        // how far we are in that fade region
+            return std::clamp(val / range, 0.0f, 1.0f);
+        }
+        // 2) Within the solid band (solidTop..solidBottom) => alpha = 1
+        else if (y <= solidBottom) {
+            return 1.0f;
+        }
+        // 3) Below the solid band, from solidBottom+1 down to fadeBottom => alpha 1..0
+        else {
+            float range = static_cast<float>(fadeBottom - solidBottom); // e.g. 1110 - 961 = 149
+            float val   = static_cast<float>(fadeBottom - y);           // how far we are from bottom fade boundary
+            return std::clamp(val / range, 0.0f, 1.0f);
+        }
+    };
+
+    // Iterate through the fade region (top..bottom) and blend black
+    for (int y = fadeTop; y <= fadeBottom; y++) {
+        // Make sure we stay within image bounds
+        if (y < 0 || y >= frame.rows)
+            continue;
+
+        float alpha = computeAlpha(y);
+
+        // For alpha blending, newColor = (1 - alpha)*original + alpha*(0,0,0)
+        // That simplifies to newColor = original*(1 - alpha).
+        uchar *rowPtr = frame.ptr<uchar>(y);
+        for (int x = 0; x < frame.cols; x++) {
+            // Assuming 3-channel BGR
+            rowPtr[3 * x + 0] = static_cast<uchar>(rowPtr[3 * x + 0] * (1.0f - alpha)); // Blue
+            rowPtr[3 * x + 1] = static_cast<uchar>(rowPtr[3 * x + 1] * (1.0f - alpha)); // Green
+            rowPtr[3 * x + 2] = static_cast<uchar>(rowPtr[3 * x + 2] * (1.0f - alpha)); // Red
+        }
+    }
+}
+
+// void draw_glowing_text(Mat &frame, const std::string &text, const std::string &fontPath,
+//                        int fontHeight, Scalar textColor, Scalar glowColor, int glowRadius) {
+//     // Create FreeType object for rendering custom fonts
+//     Ptr<cv::freetype::FreeType2> ft2 = cv::freetype::createFreeType2();
+//     ft2->loadFontData(fontPath, 0); // Load the font file
+
+//     // Calculate text size to center it
+//     Size textSize = ft2->getTextSize(text, fontHeight, -1, nullptr);
+//     Point textOrg((frame.cols - textSize.width) / 2, (frame.rows + textSize.height) / 2 - 100);
+
+//     // Create a glow layer
+//     Mat glowLayer = Mat::zeros(frame.size(), frame.type());
+
+//     // Render the glow text
+//     ft2->putText(glowLayer, text, textOrg, fontHeight, glowColor, -1, LINE_AA, false);
+
+//     // Apply Gaussian blur to create the glow effect
+//     GaussianBlur(glowLayer, glowLayer, Size(glowRadius, glowRadius), 0);
+
+//     // Add the glow layer to the original frame (preserving brightness)
+//     add(frame, glowLayer, frame); // Add glow to the frame without dimming
+
+//     // Render the main text on top
+//     ft2->putText(frame, text, textOrg, fontHeight, textColor, -1, LINE_AA, false);
+// }
 
 void draw_top_text(Mat &frame, const std::string &text, const std::string &fontPath, int fontHeight) {
     // Create FreeType object for rendering custom fonts
@@ -280,7 +397,8 @@ Mat video::write_evt(VideoCapture &src, const vec<int> &active, int frm, const v
             }
         } else if (evts[ind].type==EvtType::Text) {
             // TEXT
-            draw_glowing_text(res, evts[ind].text_str, "res/font.ttf", 60, Scalar(255,255,255), Scalar(0,0,255), 45);
+            // draw_glowing_text(res, evts[ind].text_str, "res/font.ttf", 60, Scalar(255,255,255), Scalar(0,0,255), 45);
+            draw_glowing_text(res, evts[ind].text_str, "res/font.ttf", evts[ind].text_big ? 90 : 60, Scalar(255,255,255), Scalar(0,0,255), 45);
         } else if (evts[ind].type==EvtType::Region) {
             // REGION
             int srcfrm=evts[ind].region_srcst_ + frm-evts[ind].st;
@@ -288,7 +406,10 @@ Mat video::write_evt(VideoCapture &src, const vec<int> &active, int frm, const v
 
             // copy src frame
             Mat mt;
-            src.read(mt);
+            if (!src.read(mt)) {
+                printf("ERROR: frame nonexistent (frame index %d, video frames %d).\n", srcfrm, (int)src.get(CAP_PROP_FRAME_COUNT));
+                exit(1);
+            }
 
             // effects
             Point dst=evts[ind].region_dst;
@@ -318,6 +439,9 @@ Mat video::write_evt(VideoCapture &src, const vec<int> &active, int frm, const v
         } else if (evts[ind].type==EvtType::TopText) {
             // TOP TEXT
             draw_top_text_wrap(res, evts[ind].top_text_str, "res/font.ttf", 60);
+        } else if (evts[ind].type==EvtType::HBar) {
+            // HORIZONTAL BLACK BAR
+            draw_horizontal_black_band(res);
         }
     }
 
