@@ -279,15 +279,18 @@ namespace compare {
         vec<int> srcs={
             0, // bateman
             198, // shelby
+            374, // walter
         };
         vec<string> names={
             "PATRICK BATEMAN",
             "THOMAS SHELBY",
+            "WALTER WHITE",
         };
         int i1=rand()%sz(srcs), i2=rand()%sz(srcs);
         if (i1==i2) {
             (++i2)%=sz(srcs);
         }
+        printf("comparing %s and %s\n", names[i1].c_str(), names[i2].c_str());
         int score1=0, score2=0;
 
         vec<int> win={i1,i1,i2,i2,i1,i2,i2,i2};
@@ -299,7 +302,7 @@ namespace compare {
         // res.push_back(evt_bg(0, 4.832));
         res.push_back(evt_region(0, beats[name][0], Rect(0, r1, 1080, h), Point(0,100), 1.));
         res.push_back(evt_region(0, beats[name][0], Rect(0, r1, 1080, h), Point(0,1920/2), 1.));
-        res.push_back(evt_hbar(0, beats[name][0]));
+        // res.push_back(evt_hbar(0, beats[name][0]));
         res.push_back(evt_txt(0, beats[name][0], names[i1]+"\nVS\n"+names[i2]));
         res.back().text_big=true;
         res[0].region_srcst_ = srcs[i1];
@@ -312,7 +315,7 @@ namespace compare {
             res.back().region_srcst_ = srcs[i1];
             res.push_back(evt_region(beats[name][2*i], beats[name][2*i+1], Rect(0, r1, 1080, h), Point(0,100+h), 1.));
             res.back().region_srcst_ = srcs[i2];
-            res.push_back(evt_hbar(beats[name][2*i], beats[name][2*i+1]));
+            // res.push_back(evt_hbar(beats[name][2*i], beats[name][2*i+1]));
             res.push_back(evt_txt(beats[name][2*i], beats[name][2*i+1], cats[i]));
             res.back().text_big=true;
 
@@ -331,7 +334,7 @@ namespace compare {
             res.back().region_srcst_ = srcs[i1];
             res.push_back(evt_region(beats[name][2*i], beats[name][2*i+1], Rect(0, r1, 1080, h), Point(0,100+h), 1.));
             res.back().region_srcst_ = srcs[i2];
-            res.push_back(evt_hbar(beats[name][2*i], beats[name][2*i+1]));
+            // res.push_back(evt_hbar(beats[name][2*i], beats[name][2*i+1]));
             res.push_back(evt_txt(beats[name][2*i], beats[name][2*i+1], cats[i]));
             res.back().text_big=true;
 
@@ -360,7 +363,7 @@ namespace compare {
             res.back().region_srcst_ = srcs[i1];
             res.push_back(evt_region(st, nd, Rect(0, r1, 1080, h), Point(0,100+h), 1.));
             res.back().region_srcst_ = srcs[i2];
-            res.push_back(evt_hbar(st, nd));
+            // res.push_back(evt_hbar(st, nd));
             res.push_back(evt_txt(st, nd, "TIE"));
             res.back().text_big=true;
         }

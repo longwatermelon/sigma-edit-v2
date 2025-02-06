@@ -414,11 +414,11 @@ Mat video::write_evt(VideoCapture &src, const vec<int> &active, int frm, const v
             // effects
             Point dst=evts[ind].region_dst;
             if (srcfrm-evts[ind].region_srcst_<10) {
-                shake_frame(mt, 20, evts[ind].bg_srcst_, srcfrm);
+                shake_frame(mt, 20, evts[ind].region_srcst_, srcfrm);
                 glitch_frame(mt);
-                flash_frame(mt, evts[ind].bg_srcst_, srcfrm);
+                flash_frame(mt, evts[ind].region_srcst_, srcfrm);
 
-                double shake=max(0., 1.-(srcfrm-evts[ind].bg_srcst_)*0.1);
+                double shake=max(0., 1.-(srcfrm-evts[ind].region_srcst_)*0.1);
                 int a=(int)(20.*shake); // amplitude
                 int dx=rand()%(2*a+1)-a;
                 int dy=rand()%(2*a+1)-a;
