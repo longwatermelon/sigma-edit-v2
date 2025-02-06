@@ -22,6 +22,7 @@ int main(int argc, char **argv) {
         type=stoi(argv[1]);
     }
 
+    auto st=chrono::high_resolution_clock::now();
     if (type==1) {
         // bateman edit
         printf("video type: bateman edit\n");
@@ -41,6 +42,8 @@ int main(int argc, char **argv) {
         bgm="aura-compare";
         video::create(out, src, compare::audsrc_evts(bgm), {});
     }
+    int dur = chrono::duration_cast<chrono::seconds>(chrono::high_resolution_clock::now()-st).count();
+    printf("took %dm %ds\n", dur/60, dur%60);
 
     out.release();
     while (!ifstream("no-audio.mp4")) {

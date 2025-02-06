@@ -293,12 +293,12 @@ namespace compare {
         vec<int> win={i1,i1,i2,i2,i1,i2,i2,i2};
 
         int r1=417;
-        int h=1920/2;
+        int h=1920/2-100;
 
         // intro
         // res.push_back(evt_bg(0, 4.832));
-        res.push_back(evt_region(0, beats[name][0], Rect(0, r1, 1080, h), Point(0,0), 1.));
-        res.push_back(evt_region(0, beats[name][0], Rect(0, r1, 1080, h), Point(0,h), 1.));
+        res.push_back(evt_region(0, beats[name][0], Rect(0, r1, 1080, h), Point(0,100), 1.));
+        res.push_back(evt_region(0, beats[name][0], Rect(0, r1, 1080, h), Point(0,1920/2), 1.));
         res.push_back(evt_hbar(0, beats[name][0]));
         res.push_back(evt_txt(0, beats[name][0], names[i1]+"\nVS\n"+names[i2]));
         res.back().text_big=true;
@@ -308,9 +308,9 @@ namespace compare {
         // character 1
         for (int i=0; i<4; ++i) {
             // trait
-            res.push_back(evt_region(beats[name][2*i], beats[name][2*i+1], Rect(0, r1, 1080, h), Point(0,0), 1.));
+            res.push_back(evt_region(beats[name][2*i], beats[name][2*i+1], Rect(0, r1, 1080, h), Point(0,100), 1.));
             res.back().region_srcst_ = srcs[i1];
-            res.push_back(evt_region(beats[name][2*i], beats[name][2*i+1], Rect(0, r1, 1080, h), Point(0,h), 1.));
+            res.push_back(evt_region(beats[name][2*i], beats[name][2*i+1], Rect(0, r1, 1080, h), Point(0,100+h), 1.));
             res.back().region_srcst_ = srcs[i2];
             res.push_back(evt_hbar(beats[name][2*i], beats[name][2*i+1]));
             res.push_back(evt_txt(beats[name][2*i], beats[name][2*i+1], cats[i]));
@@ -327,9 +327,9 @@ namespace compare {
         // character 2
         for (int i=4; i<8; ++i) {
             // trait
-            res.push_back(evt_region(beats[name][2*i], beats[name][2*i+1], Rect(0, r1, 1080, h), Point(0,0), 1.));
+            res.push_back(evt_region(beats[name][2*i], beats[name][2*i+1], Rect(0, r1, 1080, h), Point(0,100), 1.));
             res.back().region_srcst_ = srcs[i1];
-            res.push_back(evt_region(beats[name][2*i], beats[name][2*i+1], Rect(0, r1, 1080, h), Point(0,h), 1.));
+            res.push_back(evt_region(beats[name][2*i], beats[name][2*i+1], Rect(0, r1, 1080, h), Point(0,100+h), 1.));
             res.back().region_srcst_ = srcs[i2];
             res.push_back(evt_hbar(beats[name][2*i], beats[name][2*i+1]));
             res.push_back(evt_txt(beats[name][2*i], beats[name][2*i+1], cats[i]));
@@ -356,9 +356,9 @@ namespace compare {
             res.push_back(evt_txt(st, nd, names[i1]+" WINS"));
             res.back().text_big=true;
         } else {
-            res.push_back(evt_region(st, nd, Rect(0, r1, 1080, h), Point(0,0), 1.));
+            res.push_back(evt_region(st, nd, Rect(0, r1, 1080, h), Point(0,100), 1.));
             res.back().region_srcst_ = srcs[i1];
-            res.push_back(evt_region(st, nd, Rect(0, r1, 1080, h), Point(0,h), 1.));
+            res.push_back(evt_region(st, nd, Rect(0, r1, 1080, h), Point(0,100+h), 1.));
             res.back().region_srcst_ = srcs[i2];
             res.push_back(evt_hbar(st, nd));
             res.push_back(evt_txt(st, nd, "TIE"));
