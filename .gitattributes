@@ -1,0 +1,2 @@
+res/video/edit/bateman.mp4 filter=lfs diff=lfs merge=lfs -text
+res/video/edit/shelby.mp4 filter=lfs diff=lfs merge=lfs -text

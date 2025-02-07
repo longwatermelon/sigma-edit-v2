@@ -2,7 +2,6 @@ compile_commands.json
 .cache
 obj
 a.out
-res/video/*
 out.mp4
 ffmpeg.log
 no-audio.mp4

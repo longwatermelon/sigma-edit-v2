@@ -13,9 +13,11 @@ int main(int argc, char **argv) {
     VideoWriter out("no-audio.mp4", VideoWriter::fourcc('a','v','c','1'), FPS, Size(W,H));
 
     // 1: bateman edit
-    // 2: meme compilation
+    // 2: bateman meme compilation
     // 3: comparison
-    int type=3;
+    // 4: shelby edit
+    // 5: shelby meme compilation
+    int type=4;
     string bgm;
     string title;
 
@@ -31,8 +33,8 @@ int main(int argc, char **argv) {
         bgm="derniere-beatdrop";
         video::create(out, src, edit::audsrc_evts(bgm, title), vidsrc_cuts("bateman"));
     } else if (type==2) {
-        // meme compilation
-        printf("video type: meme compilation\n");
+        // bateman meme compilation
+        printf("video type: bateman meme compilation\n");
         VideoCapture src("res/video/edit/bateman.mp4");
         bgm="next";
         video::create(out, src, meme::audsrc_evts(title), vidsrc_cuts("bateman"));
@@ -42,7 +44,20 @@ int main(int argc, char **argv) {
         VideoCapture src("res/video/compare/src.mp4");
         bgm="aura-compare";
         video::create(out, src, compare::audsrc_evts(bgm, title), {});
+    } else if (type==4) {
+        // shelby edit
+        printf("video type: shelby edit\n");
+        VideoCapture src("res/video/edit/shelby.mp4");
+        bgm="derniere-beatdrop";
+        video::create(out, src, edit::audsrc_evts(bgm, title), vidsrc_cuts("shelby"));
+    } else if (type==5) {
+        // shelby meme compilation
+        printf("video type: shelby meme compilation\n");
+        VideoCapture src("res/video/edit/shelby.mp4");
+        bgm="next";
+        video::create(out, src, meme::audsrc_evts(title), vidsrc_cuts("shelby"));
     }
+
     int dur = chrono::duration_cast<chrono::seconds>(chrono::high_resolution_clock::now()-st).count();
     printf("took %dm %ds\n", dur/60, dur%60);
 
