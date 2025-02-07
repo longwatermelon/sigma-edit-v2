@@ -118,7 +118,7 @@ namespace edit {
         }},
     };
 
-    inline vec<Evt> audsrc_evts(string name) {
+    inline vec<Evt> audsrc_evts(string name, string &title) {
         vec<Evt> res;
         for (int i=0; i<sz(beats[name])-1; ++i) {
             res.push_back(evt_bg(beats[name][i], beats[name][i+1]));
@@ -148,7 +148,7 @@ namespace edit {
 
             int rng=rand()%100+1;
             if (rng<=50) {
-                s.push_back("SIGNS YOU MIGHT BE A SIGMA MALE");
+                s.push_back("8 SIGNS YOU MIGHT BE A SIGMA MALE");
 
                 vec<string> signs={
                     "YOU WALK YOUR OWN PATH",
@@ -178,6 +178,8 @@ namespace edit {
                     s.push_back(to_string(i+1)+". "+signs[i]);
                 }
                 s.push_back("8. YOU'RE SUBSCRIBED TO SIGMA CENTRAL");
+
+                title = "8 SIGNS YOU MIGTH BE A SIGMA MALE";
             } else if (rng<=100) {
                 s.push_back("DO YOU KNOW ALL THE SIGMA RULES?");
 
@@ -201,6 +203,8 @@ namespace edit {
                 for (int i=1; i<=8; ++i) {
                     s.push_back(to_string(i)+". "+rules[i-1]);
                 }
+
+                title = "DO YOU KNOW ALL THE SIGMA RULES?";
             }
 
             for (int i=0; i<=8; ++i) {
@@ -215,7 +219,7 @@ namespace edit {
 }
 
 namespace meme {
-    inline vec<Evt> audsrc_evts() {
+    inline vec<Evt> audsrc_evts(string &title) {
         vec<Evt> res;
         vec<string> captions={
             "\"WHY ARE YOU ALWAYS SO QUIET?\"\nMY HONEST REACTION:",
@@ -253,6 +257,7 @@ namespace meme {
             t=tp;
         }
 
+        title = "Relatable Sigma Meme Compilation";
         return res;
     }
 }
@@ -262,29 +267,44 @@ namespace compare {
         {"aura-compare", {
             4.832, 5.499, 6.166, 6.824, 7.485, 8.158, 8.837, 9.498, // character 1
             10.165, 10.825, 11.457, 12.171, 12.796, 13.457, 14.166, 14.827, // character 2
-            15.512, 18.539 // winner verdict
+            15.512, 16.201, 16.892, 17.534, 18.225, 18.896, 19.548, 20.239, // rand
+            20.880, 21.552, // last one (tiebreaker)
+            22.223, 23.536, 26.271, // winner
         }},
     };
 
-    inline vec<Evt> audsrc_evts(string name) {
+    inline vec<Evt> audsrc_evts(string name, string &title) {
         vec<Evt> res;
         vec<string> cats={
             "IQ", "BATTLE IQ", "AGILITY", "STRENGTH", "ENDURANCE", "SPEED", "EXPERIENCE",
-            "SKILL", "WEAPONS", "POWER", "COMBAT", "STAMINA", "FEATS", "DEFENSE"
+            "SKILL", "WEAPONS", "POWER", "COMBAT", "STAMINA", "FEATS", "DEFENSE", "STEALTH",
+            "TACTICS", "FOCUS", "WILLPOWER", "HAX", "LUCK", "INTIMIDATION", "RESOURCEFULNESS",
         };
         random_device rd;
         mt19937 g(rd());
         shuffle(all(cats),g);
 
+        // normal clips
         vec<int> srcs={
             0, // bateman
             198, // shelby
             374, // walter
+            564, // salesman
         };
+
+        // clips on win
+        vec<int> srcs2={
+            1161, // bateman
+            1348, // shelby
+            855, // walter
+            719, // salesman
+        };
+
         vec<string> names={
             "PATRICK BATEMAN",
             "THOMAS SHELBY",
             "WALTER WHITE",
+            "THE SALESMAN",
         };
         int i1=rand()%sz(srcs), i2=rand()%sz(srcs);
         if (i1==i2) {
@@ -293,7 +313,12 @@ namespace compare {
         printf("comparing %s and %s\n", names[i1].c_str(), names[i2].c_str());
         int score1=0, score2=0;
 
-        vec<int> win={i1,i1,i2,i2,i1,i2,i2,i2};
+        vec<vec<int>> patterns={
+            {i1,i2,i1,i2},
+            {i1,i1,i2,i2},
+            {i1,i2,i2,i1},
+            {i1,i1,i2,i1},
+        };
 
         int r1=417;
         int h=1920/2-100;
@@ -308,54 +333,61 @@ namespace compare {
         res[0].region_srcst_ = srcs[i1];
         res[1].region_srcst_ = srcs[i2];
 
-        // character 1
-        for (int i=0; i<4; ++i) {
+        auto trait_scene = [&](float t0, float t1, float t2, string trait, int winner) {
             // trait
-            res.push_back(evt_region(beats[name][2*i], beats[name][2*i+1], Rect(0, r1, 1080, h), Point(0,100), 1.));
+            res.push_back(evt_region(t0, t1, Rect(0, r1, 1080, h), Point(0,100), 1.));
             res.back().region_srcst_ = srcs[i1];
-            res.push_back(evt_region(beats[name][2*i], beats[name][2*i+1], Rect(0, r1, 1080, h), Point(0,100+h), 1.));
+            res.push_back(evt_region(t0, t1, Rect(0, r1, 1080, h), Point(0,100+h), 1.));
             res.back().region_srcst_ = srcs[i2];
-            // res.push_back(evt_hbar(beats[name][2*i], beats[name][2*i+1]));
-            res.push_back(evt_txt(beats[name][2*i], beats[name][2*i+1], cats[i]));
+            res.push_back(evt_txt(t0, t1, trait));
             res.back().text_big=true;
 
             // who gets it
-            res.push_back(evt_bg(beats[name][2*i+1], beats[name][2*i+2]));
-            res.back().bg_srcst_ = srcs[win[i]];
-            (win[i]==i1?score1:score2)++;
-            res.push_back(evt_txt(beats[name][2*i+1], beats[name][2*i+2], to_string(score1)+"-"+to_string(score2)));
+            res.push_back(evt_bg(t1, t2));
+            res.back().bg_srcst_ = srcs2[winner];
+            (winner==i1?score1:score2)++;
+            res.push_back(evt_txt(t1, t2, to_string(score1)+"-"+to_string(score2)));
             res.back().text_big=true;
+        };
+
+        // character 1
+        for (int i=0; i<4; ++i) {
+            trait_scene(beats[name][2*i], beats[name][2*i+1], beats[name][2*i+2], cats[i], i1);
         }
 
         // character 2
         for (int i=4; i<8; ++i) {
-            // trait
-            res.push_back(evt_region(beats[name][2*i], beats[name][2*i+1], Rect(0, r1, 1080, h), Point(0,100), 1.));
-            res.back().region_srcst_ = srcs[i1];
-            res.push_back(evt_region(beats[name][2*i], beats[name][2*i+1], Rect(0, r1, 1080, h), Point(0,100+h), 1.));
-            res.back().region_srcst_ = srcs[i2];
-            // res.push_back(evt_hbar(beats[name][2*i], beats[name][2*i+1]));
-            res.push_back(evt_txt(beats[name][2*i], beats[name][2*i+1], cats[i]));
-            res.back().text_big=true;
-
-            // who gets it
-            res.push_back(evt_bg(beats[name][2*i+1], beats[name][2*i+2]));
-            res.back().bg_srcst_ = srcs[win[i]];
-            (win[i]==i1?score1:score2)++;
-            res.push_back(evt_txt(beats[name][2*i+1], beats[name][2*i+2], to_string(score1)+"-"+to_string(score2)));
-            res.back().text_big=true;
+            trait_scene(beats[name][2*i], beats[name][2*i+1], beats[name][2*i+2], cats[i], i2);
         }
+
+        // random (pattern based)
+        int pat = rand()%sz(patterns);
+        for (int i=8; i<12; ++i) {
+            trait_scene(beats[name][2*i], beats[name][2*i+1], beats[name][2*i+2], cats[i], patterns[pat][i-8]);
+        }
+
+        // final for odd
+        trait_scene(beats[name][24], beats[name][25], beats[name][26], cats[12], rand()%2 ? i1 : i2);
+
+        // winner question
+        res.push_back(evt_region(beats[name][26], beats[name][27], Rect(0, r1, 1080, h), Point(0,100), 1.));
+        res.back().region_srcst_ = srcs[i1];
+        res.push_back(evt_region(beats[name][26], beats[name][27], Rect(0, r1, 1080, h), Point(0,100+h), 1.));
+        res.back().region_srcst_ = srcs[i2];
+        // res.push_back(evt_hbar(st, nd));
+        res.push_back(evt_txt(beats[name][26], beats[name][27], "WINNER?"));
+        res.back().text_big=true;
 
         // verdict
         float st=beats[name][sz(beats[name])-2], nd=beats[name][sz(beats[name])-1];
         if (score1<score2) {
             res.push_back(evt_bg(st, nd));
-            res.back().bg_srcst_ = srcs[i2];
+            res.back().bg_srcst_ = srcs2[i2];
             res.push_back(evt_txt(st, nd, names[i2]+" WINS"));
             res.back().text_big=true;
         } else if (score1>score2) {
             res.push_back(evt_bg(st, nd));
-            res.back().bg_srcst_ = srcs[i1];
+            res.back().bg_srcst_ = srcs2[i1];
             res.push_back(evt_txt(st, nd, names[i1]+" WINS"));
             res.back().text_big=true;
         } else {
@@ -368,6 +400,7 @@ namespace compare {
             res.back().text_big=true;
         }
 
+        title = names[i1] + " VS " + names[i2] + " | ULTIMATE SIGMA BATTLE";
         return res;
     }
 }
