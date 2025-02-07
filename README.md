@@ -3,12 +3,10 @@
 Improved version of https://github.com/longwatermelon/sigma-edit. Generated videos are posted [here](https://www.youtube.com/@BasedSigmaCentral).
 
 Implemented features so far:
-* Edit (Bateman)
+* Edit (Bateman, Shelby)
 * Meme compilation
+* Comparison
 
 Todo:
-* Comparison
-* Edit (Other characters)
 * Month
-* Joke
 * Try not to change your wallpaper
