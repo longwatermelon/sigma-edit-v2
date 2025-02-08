@@ -164,9 +164,9 @@ namespace edit {
                     "YOU KNOW DARK PSYCHOLOGY",
                     "YOU WATCH SIGMA EDITS",
                     "YOU LISTEN TO PHONK",
-                    "YOU DON'T CARE WHAT OTHER PEOPLE THINK",
+                    "YOU DON'T CARE WHAT OTHER\nPEOPLE THINK",
                     "YOU'RE FOCUSED ON THE GRIND",
-                    "YOUR FAVORITE LUNCHLY IS FIESTA NACHOS",
+                    "YOUR FAVORITE LUNCHLY IS\nFIESTA NACHOS",
                     "YOU'RE ALWAYS TWO STEPS AHEAD",
                     "YOU'RE ESCAPING THE MATRIX",
                     "YOU CHOSE TO BE SINGLE",
@@ -176,7 +176,7 @@ namespace edit {
                     "YOU'RE ALWAYS ALONE",
                     "YOU HAVE A BEAST INSIDE YOU",
                     "YOU SEE RED WHEN YOU'RE ANGRY",
-                    "NORADRENALINE IS YOUR BIGGEST WEAPON",
+                    "NORADRENALINE IS YOUR\nBIGGEST WEAPON",
                 };
                 random_device rd;
                 mt19937 g(rd());
@@ -187,7 +187,7 @@ namespace edit {
                 }
                 s.push_back("8. YOU'RE SUBSCRIBED TO SIGMA CENTRAL");
 
-                title = "8 SIGNS YOU MIGTH BE A SIGMA MALE";
+                title = "8 SIGNS YOU MIGHT BE A SIGMA MALE";
             } else if (rng<=100) {
                 s.push_back("DO YOU KNOW ALL THE SIGMA RULES?");
 

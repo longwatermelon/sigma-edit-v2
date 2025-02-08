@@ -9,7 +9,13 @@ struct clip_t {
     int cnt; // # frames
 };
 
+cv::Ptr<cv::freetype::FreeType2> ft2;
+
 void video::create(VideoWriter &out, VideoCapture &src, vec<Evt> evts, vec<int> srccut) {
+    // Create FreeType object for rendering custom fonts
+    ft2 = freetype::createFreeType2();
+    ft2->loadFontData("res/font.ttf", 0); // Load the font file
+
     // prepare src clips
     sort(all(srccut));
     vec<clip_t> clips;
@@ -24,6 +30,9 @@ void video::create(VideoWriter &out, VideoCapture &src, vec<Evt> evts, vec<int> 
         nxt.insert({evts[i].st, {0, i}});
         nxt.insert({evts[i].nd, {1, i}});
     }
+
+    // src cut buffer to prevent repeat clips too often
+    vec<int> srcbuf(sz(srccut));
 
     printf("%d events\n", sz(evts));
     printf("ready to start\n");
@@ -45,7 +54,9 @@ void video::create(VideoWriter &out, VideoCapture &src, vec<Evt> evts, vec<int> 
                 int choice;
                 do {
                     choice=rand()%sz(clips);
-                } while (evts[ind].nd-evts[ind].st > clips[choice].cnt);
+                    if (srcbuf[choice]>0) srcbuf[choice]--;
+                } while (evts[ind].nd-evts[ind].st > clips[choice].cnt || srcbuf[choice]>0);
+                srcbuf[choice]=2;
 
                 int evtlen=evts[ind].nd-evts[ind].st+1;
                 evts[ind].bg_srcst_=clips[choice].st+rand()%(clips[choice].cnt-evtlen+1);
@@ -80,12 +91,8 @@ void video::create(VideoWriter &out, VideoCapture &src, vec<Evt> evts, vec<int> 
     putchar('\n');
 }
 
-void draw_glowing_text(Mat &frame, const string &text, const string &fontPath,
+void draw_glowing_text(Mat &frame, const string &text,
                        int fontHeight, Scalar textColor, Scalar glowColor, int glowRadius) {
-    // Create FreeType object for rendering custom fonts
-    Ptr<freetype::FreeType2> ft2 = freetype::createFreeType2();
-    ft2->loadFontData(fontPath, 0); // Load the font file
-
     // Split the text into lines based on newline characters
     vector<string> lines;
     std::istringstream textStream(text);
@@ -390,15 +397,16 @@ Mat video::write_evt(VideoCapture &src, const vec<int> &active, int frm, const v
             }
 
             // copy to res
-            for (int r=0; r<H; ++r) {
-                for (int c=0; c<W; ++c) {
-                    res.at<Vec3b>(r,c)=mt.at<Vec3b>(r,c);
-                }
-            }
+            mt.copyTo(res);
+            // for (int r=0; r<H; ++r) {
+            //     for (int c=0; c<W; ++c) {
+            //         res.at<Vec3b>(r,c)=mt.at<Vec3b>(r,c);
+            //     }
+            // }
         } else if (evts[ind].type==EvtType::Text) {
             // TEXT
             // draw_glowing_text(res, evts[ind].text_str, "res/font.ttf", 60, Scalar(255,255,255), Scalar(0,0,255), 45);
-            draw_glowing_text(res, evts[ind].text_str, "res/font.ttf", evts[ind].text_big ? 90 : 60, Scalar(255,255,255), Scalar(0,0,255), 45);
+            draw_glowing_text(res, evts[ind].text_str, evts[ind].text_big ? 90 : 60, Scalar(255,255,255), Scalar(0,0,255), 45);
         } else if (evts[ind].type==EvtType::Region) {
             // REGION
             int srcfrm=evts[ind].region_srcst_ + frm-evts[ind].st;
