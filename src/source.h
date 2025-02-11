@@ -21,6 +21,8 @@ inline vec<int> vidsrc_cuts(string name) {
             7770,7796,7869,7921,8028,8081,8118,8229,8417,8531,8722,8875,8984,9118,9234,9547,9638,9686,
             9726,9769,9858,9884,9954,9995,10149,10232,10326,10551,10597,10649,10815,
         };
+    } else if (name=="parkour") {
+        return {0,54547};
     } else {
         assert(false);
     }
@@ -32,6 +34,8 @@ enum class EvtType {
     HBar=2,
     Text=3,
     TopText=4,
+    LeftText=5,
+    Caption=6,
 };
 
 struct Evt {
@@ -58,6 +62,12 @@ struct Evt {
 
     // top text
     string top_text_str; // what's displayed on screen
+
+    // left text
+    string left_text_str;
+
+    // caption
+    string caption_text;
 };
 
 inline Evt evt_bg(float st, float nd, int yoffset=0) {
@@ -103,6 +113,24 @@ inline Evt evt_hbar(float st, float nd) {
     e.type=EvtType::HBar;
     e.st=t2frm(st);
     e.nd=t2frm(nd);
+    return e;
+}
+
+inline Evt evt_lftxt(float st, float nd, string s) {
+    Evt e;
+    e.type=EvtType::LeftText;
+    e.st=t2frm(st);
+    e.nd=t2frm(nd);
+    e.left_text_str=s;
+    return e;
+}
+
+inline Evt evt_caption(float st, float nd, string s) {
+    Evt e;
+    e.type=EvtType::Caption;
+    e.st=t2frm(st);
+    e.nd=t2frm(nd);
+    e.caption_text=s;
     return e;
 }
 
@@ -251,12 +279,24 @@ namespace meme {
             "ME AFTER A PRODUCTIVE DAY OF\nARGUING ABOUT SIGMA MALES ON REDDIT:",
             "ME AFTER SUBSCRIBING TO\nSIGMA CENTRAL:",
             "\"WHY DO YOU HAVE NO FRIENDS?\"\nME, A SIGMA MALE:",
+            "POV: YOU'RE LOCKED IN FOR THE WINTER ARC:",
+            "ME ON MY WAY TO DO\nJAWLINE EXERCISES IN CLASS:",
+            "POV: YOU JUST LISTENED TO PHONK\nAND NOW YOU'RE UNSTOPPABLE",
+            "THAT FEELING WHEN\nYOU DISCOVER SCHOOL IS THE MATRIX:",
+            "ME AFTER A PRODUCTIVE DAY\nOF WATCHING SIGMA EDITS:",
+            "\"BRO, WHY DO YOU NEVER SMILE?\"\nME, A SIGMA:",
+            "ME AFTER FINALLY MASTERING\nTHE CHAD SMIRK:",
+            "POV: YOU STARTED CHEWING\nMASTIC GUM",
+            "ME WHEN I DISCOVER\nTHE JAWLINE CODE:",
+            "POV: YOU JUST DISCOVERED\nTHE ART OF GRILL MAXXING",
+            "POV: YOU'RE THE SILENT\nMAIN CHARACTER IN CLASS",
+            "ME AFTER READING\nTHE 48 LAWS OF POWER:",
         };
         random_device rd;
         mt19937 g(rd());
         shuffle(all(captions),g);
 
-        int cnt=8;
+        int cnt=10;
         float t=0;
         for (int i=0; i<cnt; ++i) {
             float tp=t + 3./25*sz(captions[i]);
@@ -409,6 +449,27 @@ namespace compare {
         }
 
         title = names[i1] + " VS " + names[i2] + " | ULTIMATE SIGMA BATTLE";
+        return res;
+    }
+}
+
+namespace quiz {
+    inline vec<Evt> audsrc_evts() {
+        // generate script
+        vec<pair<float,string>> lines;
+        lines.push_back({0,"Can you pass the A.P brainrot exam?"});
+        lines.push_back({lines.back().first+tts_dur(lines.back().second) + 0.5, "You need a 4/6 to pass."});
+        lines.push_back({lines.back().first+tts_dur(lines.back().second) + 0.5, "First question:\nWho did baby gronk rizz up?"});
+
+        // put into events
+        float nd=lines.back().first + tts_dur(lines.back().second) + 1;
+        vec<Evt> res;
+        res.push_back(evt_bg(0,nd));
+        res.push_back(evt_lftxt(0,nd,"*1EASY:\n1.\n2.\n*2MEDIUM:\n3.\n4.\n*3HARD:\n5.\n6."));
+        for (auto &[t,s]:lines) {
+            res.push_back(evt_caption(t, t+tts_dur(s), s));
+        }
+
         return res;
     }
 }

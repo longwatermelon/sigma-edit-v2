@@ -11,7 +11,7 @@ struct clip_t {
 
 cv::Ptr<cv::freetype::FreeType2> ft2;
 
-void video::create(VideoWriter &out, VideoCapture &src, vec<Evt> evts, vec<int> srccut) {
+vec<float> video::create(VideoWriter &out, VideoCapture &src, vec<Evt> evts, vec<int> srccut) {
     // Create FreeType object for rendering custom fonts
     ft2 = freetype::createFreeType2();
     ft2->loadFontData("res/font.ttf", 0); // Load the font file
@@ -36,6 +36,9 @@ void video::create(VideoWriter &out, VideoCapture &src, vec<Evt> evts, vec<int> 
 
     printf("%d events\n", sz(evts));
     printf("ready to start\n");
+
+    // return value
+    vec<float> aud;
 
     // process evts in nxt
     // note last evt is a kill (1)
@@ -84,11 +87,13 @@ void video::create(VideoWriter &out, VideoCapture &src, vec<Evt> evts, vec<int> 
             printf("\rframes: %d/%d (%d%% done)", frm+1, pq.back().first, (int)((float)(frm+1)/pq.back().first*100));
             fflush(stdout);
 
-            Mat res=write_evt(src, active, frm, evts);
+            Mat res=write_evt(src, active, frm, evts, aud);
             out.write(res);
         }
     }
     putchar('\n');
+
+    return aud;
 }
 
 void draw_glowing_text(Mat &frame, const string &text,
@@ -145,6 +150,137 @@ void draw_glowing_text(Mat &frame, const string &text,
                       initialY + static_cast<int>(i) * (fontHeight + lineSpacing));
 
         // Draw the main text in the specified text color
+        ft2->putText(frame, currentLine, textOrg, fontHeight, textColor,
+                     -1, LINE_AA, false);
+    }
+}
+
+void draw_text_left(Mat &frame, const string &text,
+                    int fontHeight, Scalar textColor,
+                    int borderThickness = 2) {
+    // Split the text into lines based on newline characters.
+    vector<string> lines;
+    istringstream textStream(text);
+    string line;
+    while (getline(textStream, line)) {
+        lines.push_back(line);
+    }
+
+    // Define line spacing between lines (adjust as needed).
+    int lineSpacing = 10;
+
+    // Determine the total height of the multi-line text block.
+    int totalTextHeight = static_cast<int>(lines.size()) * fontHeight +
+                          (static_cast<int>(lines.size()) - 1) * lineSpacing;
+
+    // Calculate the vertical start position to center the text block in the frame.
+    // (An upward shift of 100 pixels is applied; adjust or remove as desired.)
+    int initialY = (frame.rows - totalTextHeight) / 2 + fontHeight - 100;
+
+    // Set the fixed left margin (e.g., starting at column 200).
+    int leftMargin = 100;
+
+    // For each line, check for a dynamic color code, then draw the text.
+    for (size_t i = 0; i < lines.size(); ++i) {
+        // Make a mutable copy of the current line.
+        string currentLine = lines[i];
+
+        // Default color is the provided textColor.
+        Scalar lineColor = textColor;
+
+        // Check if the line starts with a dynamic color code (e.g., "*0", "*1", etc.)
+        if (!currentLine.empty() && currentLine[0] == '*' && currentLine.size() >= 2 && isdigit(currentLine[1])) {
+            int code = currentLine[1] - '0';
+            // Map the code to a color.
+            switch (code) {
+                case 0:
+                    lineColor = Scalar(255, 255, 255); // White
+                    break;
+                case 1:
+                    lineColor = Scalar(0, 255, 0);       // Green
+                    break;
+                case 2:
+                    lineColor = Scalar(0, 255, 255);     // Yellow
+                    break;
+                case 3:
+                    lineColor = Scalar(0, 0, 255);       // Red
+                    break;
+                default:
+                    // For any unknown code, keep the default textColor.
+                    lineColor = textColor;
+                    break;
+            }
+            // Remove the color code from the beginning of the line.
+            // This removes the '*' and the digit. Optionally, remove a following space.
+            currentLine.erase(0, 2);
+            if (!currentLine.empty() && currentLine[0] == ' ')
+                currentLine.erase(0, 1);
+        }
+
+        // Calculate the text origin for this line.
+        Point textOrg(leftMargin, initialY + static_cast<int>(i) * (fontHeight + lineSpacing));
+
+        // Draw the black border around the text by drawing the text several times at slight offsets.
+        for (int dx = -borderThickness; dx <= borderThickness; ++dx) {
+            for (int dy = -borderThickness; dy <= borderThickness; ++dy) {
+                // Skip the center position so we don't overdraw the main text.
+                if (dx == 0 && dy == 0)
+                    continue;
+                Point borderOrg = textOrg + Point(dx, dy);
+                ft2->putText(frame, currentLine, borderOrg, fontHeight,
+                             Scalar(0, 0, 0), -1, LINE_AA, false);
+            }
+        }
+
+        // Finally, draw the main text using the chosen color.
+        ft2->putText(frame, currentLine, textOrg, fontHeight,
+                     lineColor, -1, LINE_AA, false);
+    }
+}
+
+void draw_text_bottom(Mat &frame, const string &text,
+                      int fontHeight, Scalar textColor,
+                      int borderThickness = 2) {
+    // Split the text into lines based on newline characters
+    vector<string> lines;
+    istringstream textStream(text);
+    string line;
+    while (std::getline(textStream, line)) {
+        lines.push_back(line);
+    }
+
+    // Define line spacing between lines
+    int lineSpacing = 10; // Adjust as needed
+
+    // Determine the total height of the multi-line text block
+    int totalTextHeight = static_cast<int>(lines.size()) * fontHeight +
+                          (static_cast<int>(lines.size()) - 1) * lineSpacing;
+
+    // Calculate the vertical start position to center the text block in the frame.
+    // (The original function shifted the text up by 100 pixels; adjust if desired.)
+    int initialY = 0.8*H + fontHeight - 100;
+
+    // For each line, render the text with a black border and then with the main text color.
+    for (size_t i = 0; i < lines.size(); ++i) {
+        const string &currentLine = lines[i];
+
+        // Calculate the size of the current line and center it horizontally
+        Size textSize = ft2->getTextSize(currentLine, fontHeight, -1, nullptr);
+        Point textOrg((frame.cols - textSize.width) / 2,
+                      initialY + static_cast<int>(i) * (fontHeight + lineSpacing));
+
+        // Draw the black border by rendering the text several times at offsets
+        for (int dx = -borderThickness; dx <= borderThickness; ++dx) {
+            for (int dy = -borderThickness; dy <= borderThickness; ++dy) {
+                // Skip the center position where the main text will be drawn.
+                if (dx == 0 && dy == 0)
+                    continue;
+                ft2->putText(frame, currentLine, textOrg + Point(dx, dy),
+                             fontHeight, Scalar(0, 0, 0), -1, LINE_AA, false);
+            }
+        }
+
+        // Render the main (non-border) text on top of the border
         ft2->putText(frame, currentLine, textOrg, fontHeight, textColor,
                      -1, LINE_AA, false);
     }
@@ -371,7 +507,7 @@ void flash_frame(Mat &mt, int st, int cur) {
     mt.convertTo(mt, -1, intensity, 0);
 }
 
-Mat video::write_evt(VideoCapture &src, const vec<int> &active, int frm, const vec<Evt> &evts) {
+Mat video::write_evt(VideoCapture &src, const vec<int> &active, int frm, const vec<Evt> &evts, vec<float> &aud) {
     Mat res(H,W,CV_8UC3,cv::Scalar(0,0,0));
     for (int ind:active) {
         if (evts[ind].type==EvtType::Bg) {
@@ -415,7 +551,7 @@ Mat video::write_evt(VideoCapture &src, const vec<int> &active, int frm, const v
             // copy src frame
             Mat mt;
             if (!src.read(mt)) {
-                printf("ERROR: frame nonexistent (frame index %d, video frames %d).\n", srcfrm, (int)src.get(CAP_PROP_FRAME_COUNT));
+                printf("[write_evt region event] ERROR: frame nonexistent (frame index %d, video frames %d).\n", srcfrm, (int)src.get(CAP_PROP_FRAME_COUNT));
                 exit(1);
             }
 
@@ -450,6 +586,17 @@ Mat video::write_evt(VideoCapture &src, const vec<int> &active, int frm, const v
         } else if (evts[ind].type==EvtType::HBar) {
             // HORIZONTAL BLACK BAR
             draw_horizontal_black_band(res);
+        } else if (evts[ind].type==EvtType::LeftText) {
+            // LEFT TEXT
+            draw_text_left(res, evts[ind].left_text_str, 70, Scalar(255,255,255));
+        } else if (evts[ind].type==EvtType::Caption) {
+            // CAPTION
+            draw_text_bottom(res, evts[ind].caption_text, 70, Scalar(255,255,255));
+            if (frm==evts[ind].st) {
+                string cmd="espeak-ng \""+tts_preproc(evts[ind].caption_text)+"\" -w out/"+to_string(sz(aud))+".wav";
+                system(cmd.c_str());
+                aud.push_back(frm2t(evts[ind].st));
+            }
         }
     }
 
