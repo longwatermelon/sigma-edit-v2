@@ -455,17 +455,79 @@ namespace compare {
 
 namespace quiz {
     inline vec<Evt> audsrc_evts() {
+        vec<pair<string,string>> questions={
+            {"Where does your tongue go\nwhen you mew?", "At the top of your mouth"},
+            {"What do you do to become more tan?", "Carrotmaxxing"},
+            {"How do you get a strong jawline?", "Bonesmashing"},
+            {"Fill in the blank. What the ___?", "Sigma"},
+            {"Why did the sigma cross the road?", "Because the Grimace Shake was on the other side"},
+            {"What do you call a sigma with no legs?", "Disabled"},
+        };
+
+        random_device rd;
+        mt19937 g(rd());
+        shuffle(all(questions),g);
+
         // generate script
         vec<pair<float,string>> lines;
-        lines.push_back({0,"Can you pass the A.P brainrot exam?"});
-        lines.push_back({lines.back().first+tts_dur(lines.back().second) + 0.5, "You need a 4/6 to pass."});
-        lines.push_back({lines.back().first+tts_dur(lines.back().second) + 0.5, "First question:\nWho did baby gronk rizz up?"});
+        lines.push_back({0,"Can you pass the A.P Sigma Exam?"});
+        lines.push_back({lines.back().first+tts_dur(lines.back().second) + 0.5, "You need a 5 out of 6 to pass."});
+
+        auto genstr = [&](vec<string> &answers){
+            string res="*1EASY:\n";
+            for (int i:{0,1}) {
+                res+=to_string(i+1)+". ";
+                if (i<sz(answers)) {
+                    res+=answers[i];
+                }
+                res+='\n';
+            }
+
+            res+="*2MEDIUM:\n";
+            for (int i:{2,3}) {
+                res+=to_string(i+1)+". ";
+                if (i<sz(answers)) {
+                    res+=answers[i];
+                }
+                res+='\n';
+            }
+
+            res+="*3HARD:\n";
+            for (int i:{4,5}) {
+                res+=to_string(i+1)+". ";
+                if (i<sz(answers)) {
+                    res+=answers[i];
+                }
+                res+='\n';
+            }
+
+            return res;
+        };
+
+        vec<Evt> res;
+
+        float t=lines.back().first + tts_dur(lines.back().second) + 0.5;
+        vec<string> place={"First","Second","Third","Fourth","Fifth","Sixth"};
+        vec<string> answers;
+        int prevst=0;
+        for (int i=0; i<6; ++i) {
+            lines.push_back({t, place[i]+" question:\n"+questions[i].first});
+            t += tts_dur(lines.back().second)+0.2;
+            lines.push_back({t, "5... 4... 3... 2... 1..."});
+            t += tts_dur(lines.back().second)+0.1;
+
+            res.push_back(evt_lftxt(prevst, t, genstr(answers)));
+            answers.push_back(questions[i].second);
+            prevst=t;
+            lines.push_back({t, questions[i].second});
+            t += tts_dur(lines.back().second)+0.5;
+        }
+        res.push_back(evt_lftxt(prevst, t, genstr(answers)));
 
         // put into events
         float nd=lines.back().first + tts_dur(lines.back().second) + 1;
-        vec<Evt> res;
         res.push_back(evt_bg(0,nd));
-        res.push_back(evt_lftxt(0,nd,"*1EASY:\n1.\n2.\n*2MEDIUM:\n3.\n4.\n*3HARD:\n5.\n6."));
+        // res.push_back(evt_lftxt(0,nd,"*1EASY:\n1.\n2.\n*2MEDIUM:\n3.\n4.\n*3HARD:\n5.\n6."));
         for (auto &[t,s]:lines) {
             res.push_back(evt_caption(t, t+tts_dur(s), s));
         }

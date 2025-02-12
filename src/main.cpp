@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
         printf("3: comparison\n");
         printf("4: shelby edit\n");
         printf("5: shelby meme compilation\n");
-        printf("6: brainrot quiz\n");
+        printf("6: quiz\n");
         return 0;
     }
 
@@ -63,8 +63,8 @@ int main(int argc, char **argv) {
         bgm="next";
         aud=video::create(out, src, meme::audsrc_evts(title), vidsrc_cuts("shelby"));
     } else if (type==6) {
-        // brainrot quiz
-        printf("video type: brainrot quiz\n");
+        // quiz
+        printf("video type: quiz\n");
         VideoCapture src("res/video/parkour.mp4");
         bgm="wiishop";
         aud=video::create(out, src, quiz::audsrc_evts(), vidsrc_cuts("parkour"));
@@ -87,20 +87,27 @@ int main(int argc, char **argv) {
 
     // add audio events
     printf("adding audio events...\n");
-    vprint(all(aud));
+    string audcmd = "ffmpeg -i out/out.mp4 ";
+    for (int i=0; i<sz(aud); ++i) {
+        audcmd += "-i out/"+to_string(i)+".wav ";
+    }
+    audcmd += "-filter_complex \"";
     for (int i=0; i<sz(aud); ++i) {
         int st=aud[i]*1000;
-        printf("%d\n", st);
-        string audcmd = "ffmpeg -i out/out.mp4 -i out/"+to_string(i)+".wav -filter_complex \"[1:a]volume=8.0,adelay="+to_string(st)+"|"+to_string(st)+
-                        "[aud];[0:a][aud]amix=inputs=2:duration=first:normalize=0\" -c:v copy -c:a aac out/tmp.mp4 > ffmpeg.log 2>&1";
-        system(audcmd.c_str());
-
-        while (!ifstream("out/tmp.mp4")) {
-            printf("[audio events] out/tmp.mp4 not detected\n");
-            this_thread::sleep_for(chrono::milliseconds(400));
-        }
-        system("mv out/tmp.mp4 out/out.mp4");
+        audcmd += "["+to_string(i+1)+":a]adelay="+to_string(st)+"|"+to_string(st)+"[a"+to_string(i+1)+"]; ";
     }
+    audcmd += "[0:a]";
+    for (int i=0; i<sz(aud); ++i) {
+        audcmd += "[a"+to_string(i+1)+"]";
+    }
+    audcmd += "amix=inputs="+to_string(sz(aud)+1)+":duration=first\" -c:v copy -c:a aac out/tmp.mp4 > ffmpeg.log 2>&1";
+    system(audcmd.c_str());
+
+    while (!ifstream("out/tmp.mp4")) {
+        printf("[audio events] out/tmp.mp4 not detected\n");
+        this_thread::sleep_for(chrono::milliseconds(400));
+    }
+    system("mv out/tmp.mp4 out/out.mp4");
     system("rm out/*.wav");
 
     // post
