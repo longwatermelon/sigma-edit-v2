@@ -36,6 +36,8 @@ enum class EvtType {
     TopText=4,
     LeftText=5,
     Caption=6,
+    TimerBar=7,
+    Sfx=8,
 };
 
 struct Evt {
@@ -68,6 +70,9 @@ struct Evt {
 
     // caption
     string caption_text;
+
+    // sfx
+    string sfx_path;
 };
 
 inline Evt evt_bg(float st, float nd, int yoffset=0) {
@@ -131,6 +136,22 @@ inline Evt evt_caption(float st, float nd, string s) {
     e.st=t2frm(st);
     e.nd=t2frm(nd);
     e.caption_text=s;
+    return e;
+}
+
+inline Evt evt_timer(float st, float nd) {
+    Evt e;
+    e.type=EvtType::TimerBar;
+    e.st=t2frm(st);
+    e.nd=t2frm(nd);
+    return e;
+}
+
+inline Evt evt_sfx(float st, string path) {
+    Evt e;
+    e.type=EvtType::Sfx;
+    e.st=t2frm(st);
+    e.sfx_path=path;
     return e;
 }
 
@@ -455,13 +476,17 @@ namespace compare {
 
 namespace quiz {
     inline vec<Evt> audsrc_evts() {
-        vec<pair<string,string>> questions={
-            {"Where does your tongue go\nwhen you mew?", "At the top of your mouth"},
-            {"What do you do to become more tan?", "Carrotmaxxing"},
-            {"How do you get a strong jawline?", "Bonesmashing"},
-            {"Fill in the blank. What the ___?", "Sigma"},
-            {"Why did the sigma cross the road?", "Because the Grimace Shake was on the other side"},
-            {"What do you call a sigma with no legs?", "Disabled"},
+        vec<pair<string,pair<string,string>>> questions={
+            {"Where does your tongue go\nwhen you mew?", {"At the top of your mouth.","Top of your mouth"}},
+            {"What do you do to become more tan?", {"If you said carrotmaxxing,\nyou are correct.","Carrotmaxxing"}},
+            {"How do you get a strong jawline?", {"The correct answer is\nbonesmashing.","Bonesmashing"}},
+            {"Fill in the blank. Erm, what the ___?", {"Sigma","Sigma"}},
+            {"What do you call a sigma\nwith no legs?", {"Disabled","Disabled"}},
+            {"Why did the sigma cross the road?", {"Because the Grimace Shake was\non the other side", "Grimace Shake"}},
+            {"What is a sigma's favorite\nmusic genre?", {"Phonk","Phonk"}},
+            {"What gum strengthens your jawline?", {"Mastic gum is the answer.","Mastic gum"}},
+            {"What is the sigma smile called?", {"The Chad Smirk.","Chad Smirk"}},
+            {"What is the set of rules\nregarding a sigma male's jawline\ncalled?", {"The Jawline Code.","Jawline Code"}},
         };
 
         random_device rd;
@@ -471,7 +496,7 @@ namespace quiz {
         // generate script
         vec<pair<float,string>> lines;
         lines.push_back({0,"Can you pass the A.P Sigma Exam?"});
-        lines.push_back({lines.back().first+tts_dur(lines.back().second) + 0.5, "You need a 5 out of 6 to pass."});
+        lines.push_back({lines.back().first+tts_dur(lines.back().second) + 0.2, "You need a 5 out of 6 to pass."});
 
         auto genstr = [&](vec<string> &answers){
             string res="*1EASY:\n";
@@ -507,22 +532,37 @@ namespace quiz {
         vec<Evt> res;
 
         float t=lines.back().first + tts_dur(lines.back().second) + 0.5;
-        vec<string> place={"First","Second","Third","Fourth","Fifth","Sixth"};
+        vec<string> place={"First","Second","Third","Fourth","Fifth","Now for the final"};
         vec<string> answers;
         int prevst=0;
         for (int i=0; i<6; ++i) {
+            if (i==2) {
+                lines.push_back({t, "We're getting serious now, so\nonly true sigmas are allowed past\nthis point."});
+                t += tts_dur(lines.back().second)+0.2;
+            }
+
+            if (i==4) {
+                lines.push_back({t, "Now the questions are getting really\nhard, so make sure to let us\nknow what you got in the comments."});
+                t += tts_dur(lines.back().second)+0.2;
+            }
+
             lines.push_back({t, place[i]+" question:\n"+questions[i].first});
             t += tts_dur(lines.back().second)+0.2;
-            lines.push_back({t, "5... 4... 3... 2... 1..."});
-            t += tts_dur(lines.back().second)+0.1;
+
+            res.push_back(evt_timer(t, t+3));
+            res.push_back(evt_sfx(t, "res/audio/clock.wav"));
+            t += 4;
 
             res.push_back(evt_lftxt(prevst, t, genstr(answers)));
-            answers.push_back(questions[i].second);
+            answers.push_back(questions[i].second.second);
             prevst=t;
-            lines.push_back({t, questions[i].second});
+            lines.push_back({t, questions[i].second.first});
             t += tts_dur(lines.back().second)+0.5;
         }
         res.push_back(evt_lftxt(prevst, t, genstr(answers)));
+
+        lines.push_back({t, "How did you do?\nLet us know in the comments."});
+        t += tts_dur(lines.back().second)+0.2;
 
         // put into events
         float nd=lines.back().first + tts_dur(lines.back().second) + 1;

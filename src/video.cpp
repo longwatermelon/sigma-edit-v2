@@ -24,9 +24,18 @@ vec<float> video::create(VideoWriter &out, VideoCapture &src, vec<Evt> evts, vec
     }
     sort(all(clips),[](clip_t x, clip_t y){return x.cnt<y.cnt;});
 
+    // return value
+    vec<float> aud;
+
     // prepare sweepline
     multiset<pair<int,pair<int,int>>> nxt; // (time, type, evt ind)
     for (int i=0; i<sz(evts); ++i) {
+        if (evts[i].type==EvtType::Sfx) {
+            system(("cp "+evts[i].sfx_path+" out/"+to_string(sz(aud))+".wav").c_str());
+            aud.push_back(frm2t(evts[i].st));
+            continue;
+        }
+
         nxt.insert({evts[i].st, {0, i}});
         nxt.insert({evts[i].nd, {1, i}});
     }
@@ -36,9 +45,6 @@ vec<float> video::create(VideoWriter &out, VideoCapture &src, vec<Evt> evts, vec
 
     printf("%d events\n", sz(evts));
     printf("ready to start\n");
-
-    // return value
-    vec<float> aud;
 
     // process evts in nxt
     // note last evt is a kill (1)
@@ -175,7 +181,7 @@ void draw_text_left(Mat &frame, const string &text,
 
     // Calculate the vertical start position to center the text block in the frame.
     // (An upward shift of 100 pixels is applied; adjust or remove as desired.)
-    int initialY = (frame.rows - totalTextHeight) / 2 + fontHeight - 100;
+    int initialY = (frame.rows - totalTextHeight) / 2 + fontHeight - 250;
 
     // Set the fixed left margin (e.g., starting at column 200).
     int leftMargin = 100;
@@ -258,7 +264,7 @@ void draw_text_bottom(Mat &frame, const string &text,
 
     // Calculate the vertical start position to center the text block in the frame.
     // (The original function shifted the text up by 100 pixels; adjust if desired.)
-    int initialY = 0.8*H + fontHeight - 100;
+    int initialY = 0.75*H + fontHeight - 100;
 
     // For each line, render the text with a black border and then with the main text color.
     for (size_t i = 0; i < lines.size(); ++i) {
@@ -588,7 +594,7 @@ Mat video::write_evt(VideoCapture &src, const vec<int> &active, int frm, const v
             draw_horizontal_black_band(res);
         } else if (evts[ind].type==EvtType::LeftText) {
             // LEFT TEXT
-            draw_text_left(res, evts[ind].left_text_str, 70, Scalar(255,255,255));
+            draw_text_left(res, evts[ind].left_text_str, 80, Scalar(255,255,255));
         } else if (evts[ind].type==EvtType::Caption) {
             // CAPTION
             draw_text_bottom(res, evts[ind].caption_text, 70, Scalar(255,255,255));
@@ -596,6 +602,19 @@ Mat video::write_evt(VideoCapture &src, const vec<int> &active, int frm, const v
                 string cmd="espeak-ng \""+tts_preproc(evts[ind].caption_text)+"\" -w out/"+to_string(sz(aud))+".wav";
                 system(cmd.c_str());
                 aud.push_back(frm2t(evts[ind].st));
+            }
+        } else if (evts[ind].type==EvtType::TimerBar) {
+            // TIMER BAR
+            int y=0.75*H;
+            int h=80;
+            int w=0.6*W;
+            int x=W/2-w/2;
+            float p=(float)(frm-evts[ind].st)/(evts[ind].nd-evts[ind].st);
+            int px=x+p*w;
+            for (int i=y; i<y+h; ++i) {
+                for (int j=x; j<x+w; ++j) {
+                    res.at<Vec3b>(i,j) = j>px ? Vec3b(128,128,128) : Vec3b(50,50,255);
+                }
             }
         }
     }
