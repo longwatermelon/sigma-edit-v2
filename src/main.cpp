@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
         printf("video type: quiz\n");
         VideoCapture src("res/video/parkour.mp4");
         bgm="wiishop";
-        aud=video::create(out, src, quiz::audsrc_evts(), vidsrc_cuts("parkour"));
+        aud=video::create(out, src, quiz::audsrc_evts(title), vidsrc_cuts("parkour"));
     }
 
     int dur = chrono::duration_cast<chrono::seconds>(chrono::high_resolution_clock::now()-st).count();

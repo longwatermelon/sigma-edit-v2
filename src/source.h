@@ -475,7 +475,7 @@ namespace compare {
 }
 
 namespace quiz {
-    inline vec<Evt> audsrc_evts() {
+    inline vec<Evt> audsrc_evts(string &title) {
         vec<pair<string,pair<string,string>>> questions={
             {"Where does your tongue go\nwhen you mew?", {"At the top of your mouth.","Top of your mouth"}},
             {"What do you do to become more tan?", {"If you said carrotmaxxing,\nyou are correct.","Carrotmaxxing"}},
@@ -572,6 +572,7 @@ namespace quiz {
             res.push_back(evt_caption(t, t+tts_dur(s), s));
         }
 
+        title = "AP SIGMA QUIZ | ARE YOU A TRUE SIGMA?";
         return res;
     }
 }
