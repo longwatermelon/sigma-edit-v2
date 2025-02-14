@@ -236,7 +236,7 @@ namespace edit {
                 }
                 s.push_back("8. YOU'RE SUBSCRIBED TO SIGMA CENTRAL");
 
-                title = "8 SIGNS YOU MIGHT BE A SIGMA MALE";
+                title = "8 SIGNS YOU MIGHT BE A SIGMA MALE\n#shorts #sigma";
             } else if (rng<=100) {
                 s.push_back("DO YOU KNOW ALL THE SIGMA RULES?");
 
@@ -261,7 +261,7 @@ namespace edit {
                     s.push_back(to_string(i)+". "+rules[i-1]);
                 }
 
-                title = "DO YOU KNOW ALL THE SIGMA RULES?";
+                title = "DO YOU KNOW ALL THE SIGMA RULES?\n#shorts #sigma";
             }
 
             for (int i=0; i<=8; ++i) {
@@ -326,7 +326,7 @@ namespace meme {
             t=tp;
         }
 
-        title = "Relatable Sigma Meme Compilation";
+        title = "Relatable Sigma Meme Compilation\n#shorts #sigma #meme";
         return res;
     }
 }
@@ -469,7 +469,17 @@ namespace compare {
             res.back().text_big=true;
         }
 
-        title = names[i1] + " VS " + names[i2] + " | ULTIMATE SIGMA BATTLE";
+        // vec<string> names={
+        //     "PATRICK BATEMAN",
+        //     "THOMAS SHELBY",
+        //     "WALTER WHITE",
+        //     "THE SALESMAN",
+        // };
+        title = names[i1] + " VS " + names[i2] + " | ULTIMATE SIGMA BATTLE\n#shorts #sigma ";
+        if (i1==0 || i2==0) title+="#patrickbateman ";
+        if (i1==1 || i2==1) title+="#tommyshelby ";
+        if (i1==2 || i2==2) title+="#walterwhite ";
+        if (i1==3 || i2==3) title+="#squidgame2 ";
         return res;
     }
 }
@@ -572,7 +582,7 @@ namespace quiz {
             res.push_back(evt_caption(t, t+tts_dur(s), s));
         }
 
-        title = "AP SIGMA QUIZ | ARE YOU A TRUE SIGMA?";
+        title = "AP SIGMA QUIZ | ARE YOU A TRUE SIGMA?\n#shorts #sigma #brainrot #brainrotquiz #quiz";
         return res;
     }
 }

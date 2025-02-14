@@ -86,30 +86,32 @@ int main(int argc, char **argv) {
     system("rm no-audio.mp4");
 
     // add audio events
-    printf("adding audio events...\n");
-    string audcmd = "ffmpeg -i out/out.mp4 ";
-    for (int i=0; i<sz(aud); ++i) {
-        audcmd += "-i out/"+to_string(i)+".wav ";
-    }
-    audcmd += "-filter_complex \"";
-    for (int i=0; i<sz(aud); ++i) {
-        int st=aud[i]*1000;
-        audcmd += "["+to_string(i+1)+":a]volume=2.0,adelay="+to_string(st)+"|"+to_string(st)+"[a"+to_string(i+1)+"]; ";
-    }
-    audcmd += "[0:a]";
-    for (int i=0; i<sz(aud); ++i) {
-        audcmd += "[a"+to_string(i+1)+"]";
-    }
-    audcmd += "amix=inputs="+to_string(sz(aud)+1)+":normalize=0:duration=first\" -c:v copy -c:a aac out/tmp.mp4 > ffmpeg.log 2>&1";
-    system(audcmd.c_str());
+    if (!empty(aud)) {
+        printf("adding audio events...\n");
+        string audcmd = "ffmpeg -i out/out.mp4 ";
+        for (int i=0; i<sz(aud); ++i) {
+            audcmd += "-i out/"+to_string(i)+".wav ";
+        }
+        audcmd += "-filter_complex \"";
+        for (int i=0; i<sz(aud); ++i) {
+            int st=aud[i]*1000;
+            audcmd += "["+to_string(i+1)+":a]volume=2.0,adelay="+to_string(st)+"|"+to_string(st)+"[a"+to_string(i+1)+"]; ";
+        }
+        audcmd += "[0:a]";
+        for (int i=0; i<sz(aud); ++i) {
+            audcmd += "[a"+to_string(i+1)+"]";
+        }
+        audcmd += "amix=inputs="+to_string(sz(aud)+1)+":normalize=0:duration=first\" -c:v copy -c:a aac out/tmp.mp4 > ffmpeg.log 2>&1";
+        system(audcmd.c_str());
 
-    while (!ifstream("out/tmp.mp4")) {
-        printf("[audio events] out/tmp.mp4 not detected\n");
-        this_thread::sleep_for(chrono::milliseconds(400));
+        while (!ifstream("out/tmp.mp4")) {
+            printf("[audio events] out/tmp.mp4 not detected\n");
+            this_thread::sleep_for(chrono::milliseconds(400));
+        }
+        // system("ffmpeg -i out/tmp.mp4 -af \"dynaudnorm\" -c:v copy -c:a aac out/out.mp4 > ffmpeg.log 2>&1");
+        system("mv out/tmp.mp4 out/out.mp4");
+        system("rm out/*.wav");
     }
-    // system("ffmpeg -i out/tmp.mp4 -af \"dynaudnorm\" -c:v copy -c:a aac out/out.mp4 > ffmpeg.log 2>&1");
-    system("mv out/tmp.mp4 out/out.mp4");
-    system("rm out/*.wav");
 
     // post
     printf("========\n");
