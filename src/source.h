@@ -221,7 +221,6 @@ namespace edit {
                     "YOU CHOSE TO BE SINGLE",
                     "YOU ENJOY SOLITUDE",
                     "YOU HAVE NO FRIENDS",
-                    "YOU HAVE NO RIZZ",
                     "YOU'RE ALWAYS ALONE",
                     "YOU HAVE A BEAST INSIDE YOU",
                     "YOU SEE RED WHEN YOU'RE ANGRY",
