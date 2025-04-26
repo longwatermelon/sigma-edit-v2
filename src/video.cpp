@@ -294,7 +294,7 @@ void draw_text_bottom(Mat &frame, const string &text,
 
 void draw_horizontal_black_band(cv::Mat &frame, int centerY = 960, int fadeSize = 150)
 {
-    // Define the region that’s fully black:
+    // Define the region that's fully black:
     // for example, centerY - 1, centerY, centerY + 1
     int solidTop    = centerY - 1;  // 959
     int solidBottom = centerY + 1;  // 961
@@ -507,10 +507,28 @@ void glitch_frame(Mat &mt) {
 }
 
 void flash_frame(Mat &mt, int st, int cur) {
-    double intensity=1.8-(cur-st)*0.1;
-    intensity=std::max(1., intensity);
+    double intensity = 2.5 - (cur-st)*0.15; // Increased initial intensity and decay rate
+    intensity = std::max(1., intensity);
 
     mt.convertTo(mt, -1, intensity, 0);
+}
+
+void zoom_frame(Mat &mt, int st, int cur) {
+    // Sine ease-out: fast at start, slow at end
+    double progress = std::min(1.0, (cur-st) / 6.0); // 0 to 1 over 6 frames (was 10)
+    double t = sin(progress * M_PI_2); // ease-out
+    double zoom = 1.10 * (1.0 - t) + 1.0 * t;
+    
+    if (zoom > 1.0) {
+        int newWidth = mt.cols * zoom;
+        int newHeight = mt.rows * zoom;
+        int offsetX = (newWidth - mt.cols) / 2;
+        int offsetY = (newHeight - mt.rows) / 2;
+        Mat zoomed;
+        resize(mt, zoomed, Size(newWidth, newHeight), 0, 0, INTER_LINEAR);
+        Rect roi(offsetX, offsetY, mt.cols, mt.rows);
+        zoomed(roi).copyTo(mt);
+    }
 }
 
 Mat video::write_evt(VideoCapture &src, const vec<int> &active, int frm, const vec<Evt> &evts, vec<float> &aud) {
@@ -533,18 +551,26 @@ Mat video::write_evt(VideoCapture &src, const vec<int> &active, int frm, const v
 
             // effects
             if (srcfrm-evts[ind].bg_srcst_<10) {
-                shake_frame(mt, 20, evts[ind].bg_srcst_, srcfrm);
+                shake_frame(mt, 15, evts[ind].bg_srcst_, srcfrm); // Reduced shake amplitude for better compatibility with zoom
                 glitch_frame(mt);
                 flash_frame(mt, evts[ind].bg_srcst_, srcfrm);
+                zoom_frame(mt, evts[ind].bg_srcst_, srcfrm);
             }
 
             // copy to res
             mt.copyTo(res);
-            // for (int r=0; r<H; ++r) {
-            //     for (int c=0; c<W; ++c) {
-            //         res.at<Vec3b>(r,c)=mt.at<Vec3b>(r,c);
-            //     }
-            // }
+
+            // Ensure top and bottom regions stay black
+            for (int r = 0; r < R1; r++) {
+                for (int c = 0; c < W; c++) {
+                    res.at<Vec3b>(r,c) = Vec3b(0,0,0);
+                }
+            }
+            for (int r = R2; r < H; r++) {
+                for (int c = 0; c < W; c++) {
+                    res.at<Vec3b>(r,c) = Vec3b(0,0,0);
+                }
+            }
         } else if (evts[ind].type==EvtType::Text) {
             // TEXT
             // draw_glowing_text(res, evts[ind].text_str, "res/font.ttf", 60, Scalar(255,255,255), Scalar(0,0,255), 45);
